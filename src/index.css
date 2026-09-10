@@ -1,0 +1,83 @@
+@import "tailwindcss";
+
+:root {
+  --font-serif: 'Playfair Display', Georgia, serif;
+  --font-sans: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-handwriting: 'Sacramento', cursive;
+}
+
+body {
+  font-family: var(--font-sans);
+  background-color: #F9F6F0;
+  color: #2B2A27;
+  overflow-x: hidden;
+}
+
+.font-serif {
+  font-family: var(--font-serif);
+}
+
+.font-handwriting {
+  font-family: var(--font-handwriting);
+}
+
+/* Custom Glassmorphism & Card Styles */
+.glass-panel {
+  background: rgba(255, 255, 255, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(239, 230, 213, 0.8);
+}
+
+.glass-dark {
+  background: rgba(43, 42, 39, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.terracotta-gradient {
+  background: linear-gradient(135deg, #C86D51 0%, #A84E36 100%);
+}
+
+.olive-gradient {
+  background: linear-gradient(135deg, #5B6E4E 0%, #445439 100%);
+}
+
+.warm-sand-gradient {
+  background: linear-gradient(180deg, #F9F6F0 0%, #EFE6D5 100%);
+}
+
+/* Animations */
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.6; transform: scale(1); }
+  50% { opacity: 0.9; transform: scale(1.05); }
+}
+
+.animate-float {
+  animation: floatSlow 4s ease-in-out infinite;
+}
+
+.animate-pulse-glow {
+  animation: pulseGlow 3s ease-in-out infinite;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+::-webkit-scrollbar-track {
+  background: #F9F6F0;
+}
+::-webkit-scrollbar-thumb {
+  background: #D4A373;
+  border-radius: 4px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #C86D51;
+}
