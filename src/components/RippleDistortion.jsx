@@ -1,6 +1,5 @@
 import { useEffect, useRef } from 'react';
 import { Renderer, Program, Mesh, Geometry, Triangle, Texture, RenderTarget } from 'ogl';
-import './RippleDistortion.css';
 
 const MAX_WAVES = 100;
 const QUALITY_SCALE = { low: 0.4, medium: 0.7, high: 1 };
@@ -9,16 +8,13 @@ const LIFE_CONSTANT = Math.log(500);
 
 const waveVertex = `
 precision highp float;
-
 attribute vec2 position;
 attribute vec2 uv;
 attribute vec2 iOffset;
 attribute vec2 iScale;
 attribute float iOpacity;
-
 varying vec2 vUv;
 varying float vOpacity;
-
 void main() {
   vUv = uv;
   vOpacity = iOpacity;
@@ -28,24 +24,17 @@ void main() {
 
 const waveFragment = `
 precision highp float;
-
 varying vec2 vUv;
 varying float vOpacity;
-
 uniform float uRings;
-
 const float PI = 3.141592653589793;
 const float EDGE = 0.006737947;
-
 void main() {
   vec2 p = vUv * 2.0 - 1.0;
   float r = dot(p, p);
   if (r > 1.0) discard;
-
   float brush = (exp(-r * 5.0) - EDGE) / (1.0 - EDGE);
-
   brush *= 0.55 + 0.45 * cos(sqrt(r) * PI * 2.0 * uRings);
-
   gl_FragColor = vec4(vec3(brush * vOpacity * vOpacity), 1.0);
 }
 `;
@@ -63,9 +52,7 @@ void main() {
 
 const compositeFragment = `
 precision highp float;
-
 varying vec2 vUv;
-
 uniform sampler2D uTexture;
 uniform sampler2D uDisplacement;
 uniform vec2 uResolution;
@@ -93,7 +80,6 @@ vec2 coverUV(vec2 uv) {
 void main() {
   float amount = texture2D(uDisplacement, vUv).r;
   vec2 base = coverUV(vUv);
-
   float theta = amount * uSwirl * TAU;
   vec2 dir = vec2(sin(theta), cos(theta));
   vec2 push = dir * amount * uStrength;
@@ -163,6 +149,7 @@ const RippleDistortion = ({
   clickStrength = 2,
   quality = 'medium',
   enabled = true,
+  onImageLoaded,
   className = '',
   style
 }) => {
@@ -176,18 +163,20 @@ const RippleDistortion = ({
     const mount = mountRef.current;
     if (!mount) return;
 
-    const reduceMotion =
-      typeof window !== 'undefined' &&
-      window.matchMedia &&
-      window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let renderer;
+    try {
+      renderer = new Renderer({
+        alpha: true,
+        antialias: false,
+        dpr: Math.min(window.devicePixelRatio || 1, 2)
+      });
+    } catch (err) {
+      console.warn('WebGL not supported or initialization failed:', err);
+      return;
+    }
 
-    const renderer = new Renderer({
-      alpha: false,
-      antialias: false,
-      dpr: Math.min(window.devicePixelRatio || 1, 2)
-    });
     const gl = renderer.gl;
-    gl.clearColor(0, 0, 0, 1);
+    gl.clearColor(0, 0, 0, 0);
     const canvas = gl.canvas;
     canvas.style.width = '100%';
     canvas.style.height = '100%';
@@ -204,12 +193,16 @@ const RippleDistortion = ({
 
     let disposed = false;
     const image = new window.Image();
-    image.crossOrigin = 'anonymous';
+    // Only set crossOrigin for external URLs to avoid CORS block on local assets
+    if (src.startsWith('http://') || src.startsWith('https://')) {
+      image.crossOrigin = 'anonymous';
+    }
     image.decoding = 'async';
     image.onload = () => {
       if (disposed) return;
       imageTexture.image = image;
       compositeUniforms.uTextureSize.value = [image.naturalWidth || 1, image.naturalHeight || 1];
+      if (onImageLoaded) onImageLoaded();
     };
     image.src = src;
 
@@ -333,7 +326,7 @@ const RippleDistortion = ({
 
     const onMove = event => {
       const cfg = configRef.current;
-      if (!cfg.enabled || reduceMotion || cfg.trigger === 'click') return;
+      if (!cfg.enabled || cfg.trigger === 'click') return;
       const point = localPoint(event.clientX, event.clientY);
       if (!point) return;
       const step = Math.max(1, cfg.spacing);
@@ -346,7 +339,7 @@ const RippleDistortion = ({
 
     const onDown = event => {
       const cfg = configRef.current;
-      if (!cfg.enabled || reduceMotion || cfg.trigger === 'hover') return;
+      if (!cfg.enabled || cfg.trigger === 'hover') return;
       const point = localPoint(event.clientX, event.clientY);
       if (!point) return;
       setNewWave(point[0], point[1], Math.max(1, cfg.clickStrength));
@@ -364,8 +357,8 @@ const RippleDistortion = ({
       previousTime = now;
       const cfg = configRef.current;
 
-      const growth = reduceMotion ? 0 : 1 - Math.exp(-delta * 1.09);
-      const decay = reduceMotion ? 1 : Math.exp((-delta * LIFE_CONSTANT) / Math.max(0.15, cfg.fade));
+      const growth = 1 - Math.exp(-delta * 1.09);
+      const decay = Math.exp((-delta * LIFE_CONSTANT) / Math.max(0.15, cfg.fade));
 
       for (let i = 0; i < MAX_WAVES; i += 1) {
         const wave = waves[i];
@@ -401,18 +394,16 @@ const RippleDistortion = ({
     raf = requestAnimationFrame(loop);
 
     return () => {
-      disposed = true;
       cancelAnimationFrame(raf);
       ro.disconnect();
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerdown', onDown);
       uniformsRef.current = null;
-      if (canvas.parentNode === mount) mount.removeChild(canvas);
+      if (canvas && canvas.parentNode === mount) mount.removeChild(canvas);
       const ext = gl.getExtension('WEBGL_lose_context');
       if (ext) ext.loseContext();
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [src, quality]);
+  }, [src, quality, onImageLoaded]);
 
   useEffect(() => {
     const u = uniformsRef.current;
@@ -428,7 +419,13 @@ const RippleDistortion = ({
     u.composite.uTint.value = hexToRGB(tint);
   }, [rings, strength, swirl, dispersion, glint, tintAmount, grayscale, highlightColor, tint]);
 
-  return <div ref={mountRef} className={`ripple-distortion ${className}`.trim()} style={style} />;
+  return (
+    <div
+      ref={mountRef}
+      className={`w-full h-full relative overflow-hidden ${className}`.trim()}
+      style={{ position: 'relative', width: '100%', height: '100%', ...style }}
+    />
+  );
 };
 
 export default RippleDistortion;

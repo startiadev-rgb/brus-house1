@@ -1,82 +1,169 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Heart, Gift, Sparkles, MessageCircle, ChevronDown, ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react';
+import RippleDistortion from './RippleDistortion';
+
+const SLIDES = [
+  {
+    id: 'sala1',
+    title: 'Sala de Estar & Rack Vermelho',
+    src: '/images/sala1.jpg',
+    boardSrc: '/images/sala1_board.jpg',
+    desc: 'Rack vermelho em destaque, sofá macio em linho, plantas decorativas e luz amarela 2700K.'
+  },
+  {
+    id: 'cozinha',
+    title: 'Cozinha Conceito',
+    src: '/images/cozinha.jpg',
+    boardSrc: '/images/cozinha_board.jpg',
+    desc: 'Bancada funcional em madeira, prateleiras abertas para potes de âmbar, geladeira verde e fita LED.'
+  },
+  {
+    id: 'sala2',
+    title: 'Sala Integrada & Jantar',
+    src: '/images/sala2.jpg',
+    boardSrc: '/images/sala2_board.jpg',
+    desc: 'Integração perfeita entre estar, mesa de jantar e cantinho de leitura com linho e couro caramelo.'
+  },
+  {
+    id: 'banheiro',
+    title: 'Banheiro Afetivo',
+    src: '/images/banheiro.jpg',
+    boardSrc: '/images/banheiro_board.jpg',
+    desc: 'Bancada em madeira aquecida, espelho oval moderno, folhagens pendentes e luz aconchegante.'
+  }
+];
 
 export default function Hero({ onOpenCustomGift }) {
   const [bgIndex, setBgIndex] = useState(0);
   const [fullscreenImage, setFullscreenImage] = useState(null);
+  const [imagesLoaded, setImagesLoaded] = useState({});
+  const [rippleReady, setRippleReady] = useState(false);
 
-  const slides = [
-    {
-      id: 'sala1',
-      title: 'Sala de Estar & Rack Vermelho',
-      src: '/images/sala1.jpg',
-      boardSrc: '/images/sala1_board.jpg',
-      desc: 'Rack vermelho em destaque, sofá macio em linho, plantas decorativas e luz amarela 2700K.'
-    },
-    {
-      id: 'cozinha',
-      title: 'Cozinha Conceito',
-      src: '/images/cozinha.jpg',
-      boardSrc: '/images/cozinha_board.jpg',
-      desc: 'Bancada funcional em madeira, prateleiras abertas para potes de âmbar, geladeira verde e fita LED.'
-    },
-    {
-      id: 'sala2',
-      title: 'Sala Integrada & Jantar',
-      src: '/images/sala2.jpg',
-      boardSrc: '/images/sala2_board.jpg',
-      desc: 'Integração perfeita entre estar, mesa de jantar e cantinho de leitura com linho e couro caramelo.'
-    },
-    {
-      id: 'banheiro',
-      title: 'Banheiro Afetivo',
-      src: '/images/banheiro.jpg',
-      boardSrc: '/images/banheiro_board.jpg',
-      desc: 'Bancada em madeira aquecida, espelho oval moderno, folhagens pendentes e luz aconchegante.'
-    }
-  ];
+  // Preload all slide images on mount
+  useEffect(() => {
+    SLIDES.forEach((slide) => {
+      const img = new window.Image();
+      img.onload = () => {
+        setImagesLoaded((prev) => ({ ...prev, [slide.id]: true }));
+      };
+      img.src = slide.src;
+    });
+  }, []);
 
-  // Automatic Background slideshow timer (every 4 seconds)
+  // Automatic background slideshow (every 4.5 seconds)
   useEffect(() => {
     const timer = setInterval(() => {
-      setBgIndex((prev) => (prev + 1) % slides.length);
-    }, 4000);
+      setBgIndex((prev) => (prev + 1) % SLIDES.length);
+      // Reset ripple ready state when slide changes
+      setRippleReady(false);
+    }, 4500);
     return () => clearInterval(timer);
-  }, [slides.length]);
+  }, []);
 
-  const currentSlide = slides[bgIndex];
+  const handleRippleImageLoaded = useCallback(() => {
+    setRippleReady(true);
+  }, []);
+
+  const currentSlide = SLIDES[bgIndex];
 
   return (
-    <section className="relative min-h-[92vh] pt-24 pb-16 sm:pt-32 sm:pb-24 overflow-hidden flex items-center justify-center text-center">
+    <section
+      className="relative min-h-[95vh] pt-24 pb-16 sm:pt-32 sm:pb-24 overflow-hidden flex items-center justify-center text-center"
+      style={{ backgroundColor: '#2B2A27' }}
+    >
       
-      {/* Full-Bleed Background Slideshow (Images Rolling Directly Behind Text) */}
-      <div className="absolute inset-0 -z-20 overflow-hidden bg-[#2B2A27]">
-        {slides.map((slide, index) => (
+      {/* ================================================================
+          LAYER 1: CSS Background Images (base layer, always visible)
+          This is the reliable fallback — pure <img> tags with crossfade.
+          z-index: 0
+          ================================================================ */}
+      <div
+        className="absolute inset-0 overflow-hidden"
+        style={{ zIndex: 0, backgroundColor: '#2B2A27' }}
+      >
+        {SLIDES.map((slide, index) => (
           <div
             key={slide.id}
-            className={`absolute inset-0 transition-all duration-1000 ease-in-out ${
-              index === bgIndex
-                ? 'opacity-100 scale-105 z-10'
-                : 'opacity-0 scale-100 z-0'
-            }`}
+            style={{
+              position: 'absolute',
+              inset: 0,
+              opacity: index === bgIndex ? 1 : 0,
+              transform: index === bgIndex ? 'scale(1.05)' : 'scale(1)',
+              transition: 'opacity 1s ease-in-out, transform 6s ease-out',
+              pointerEvents: index === bgIndex ? 'auto' : 'none',
+            }}
           >
             <img
               src={slide.src}
               alt={slide.title}
-              className="w-full h-full object-cover filter brightness-[0.65] contrast-[1.05] transition-transform duration-[6000ms] ease-out"
+              loading="eager"
+              decoding="async"
+              style={{
+                width: '100%',
+                height: '100%',
+                objectFit: 'cover',
+                filter: 'brightness(0.75) contrast(1.05)',
+                display: 'block',
+              }}
             />
           </div>
         ))}
       </div>
 
-      {/* Dark Gradient Vignette for High Typography Contrast (AAA WCAG) */}
-      <div className="absolute inset-0 bg-gradient-to-b from-[#2B2A27]/80 via-[#2B2A27]/55 to-[#F9F6F0] -z-10 pointer-events-none" />
+      {/* ================================================================
+          LAYER 2: WebGL Ripple Distortion (interactive enhancement)
+          Only visible after image loads. Falls back gracefully.
+          z-index: 1
+          ================================================================ */}
+      <div
+        className="absolute inset-0 overflow-hidden"
+        style={{
+          zIndex: 1,
+          pointerEvents: 'auto',
+          opacity: rippleReady ? 0.55 : 0,
+          transition: 'opacity 0.8s ease-in-out',
+        }}
+      >
+        <RippleDistortion
+          key={bgIndex}
+          src={SLIDES[bgIndex].src}
+          brushSize={160}
+          strength={0.25}
+          swirl={1}
+          rings={3}
+          grayscale={false}
+          tint="#C86D51"
+          tintAmount={0.06}
+          trigger="both"
+          quality="medium"
+          onImageLoaded={handleRippleImageLoaded}
+          className="w-full h-full"
+        />
+      </div>
 
-      {/* Hero Content Container */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 relative z-10 space-y-7">
+      {/* ================================================================
+          LAYER 3: Dark Vignette Gradient (text readability)
+          z-index: 2
+          ================================================================ */}
+      <div
+        className="absolute inset-0 pointer-events-none"
+        style={{
+          zIndex: 2,
+          background: 'linear-gradient(to bottom, rgba(43,42,39,0.80) 0%, rgba(43,42,39,0.50) 50%, #F9F6F0 100%)',
+        }}
+      />
+
+      {/* ================================================================
+          LAYER 4: Hero Content (text, buttons, controls)
+          z-index: 10
+          ================================================================ */}
+      <div
+        className="max-w-4xl mx-auto px-4 sm:px-6 relative space-y-7"
+        style={{ zIndex: 10 }}
+      >
         
         {/* Logo Badge */}
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/15 backdrop-blur-md border border-white/30 shadow-lg animate-float">
+        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/40 backdrop-blur-md border border-white/30 shadow-lg animate-float">
           <Sparkles size={14} className="text-[#D4A373]" />
           <span className="text-xs font-bold text-white uppercase tracking-wider">
             Bru's House • Chá de Casa Nova
@@ -89,13 +176,13 @@ export default function Hero({ onOpenCustomGift }) {
             Sejam bem-vindos à <br />
             <span className="text-[#D4A373] italic">Bru's House 🏡</span>
           </h1>
-          <p className="text-xs sm:text-sm text-white/90 font-semibold tracking-wider uppercase drop-shadow-sm">
+          <p className="text-xs sm:text-sm text-white/90 font-semibold tracking-wider uppercase drop-shadow-md">
             Nosso novo lar em tons terrosos, madeira & afeto
           </p>
         </div>
 
-        {/* WhatsApp-style Intimate Card (High Contrast Glassmorphism) */}
-        <div className="bg-[#2B2A27]/85 backdrop-blur-xl p-5 sm:p-7 rounded-3xl shadow-2xl border border-white/25 max-w-xl mx-auto text-left relative transition-all">
+        {/* WhatsApp-style Intimate Card */}
+        <div className="bg-[#2B2A27]/85 backdrop-blur-xl p-5 sm:p-7 rounded-3xl shadow-2xl border border-white/30 max-w-xl mx-auto text-left relative transition-all">
           <div className="flex items-center justify-between gap-2 mb-3">
             <div className="flex items-center gap-2 text-xs font-bold text-[#D4A373] uppercase tracking-wider">
               <MessageCircle size={15} className="text-[#D4A373]" /> Mensagem da Bru & Cat
@@ -117,9 +204,9 @@ export default function Hero({ onOpenCustomGift }) {
         </div>
 
         {/* Background Slideshow Controls & Info Indicator */}
-        <div className="bg-black/60 backdrop-blur-md p-3 px-5 rounded-2xl border border-white/20 max-w-md mx-auto flex items-center justify-between gap-3 text-white text-xs">
+        <div className="bg-black/70 backdrop-blur-md p-3 px-5 rounded-2xl border border-white/30 max-w-md mx-auto flex items-center justify-between gap-3 text-white text-xs shadow-xl">
           <button
-            onClick={() => setBgIndex((prev) => (prev - 1 + slides.length) % slides.length)}
+            onClick={() => setBgIndex((prev) => (prev - 1 + SLIDES.length) % SLIDES.length)}
             className="p-1 rounded-full hover:bg-white/20 transition-colors cursor-pointer text-white"
             aria-label="Imagem anterior"
           >
@@ -139,7 +226,7 @@ export default function Hero({ onOpenCustomGift }) {
           </div>
 
           <button
-            onClick={() => setBgIndex((prev) => (prev + 1) % slides.length)}
+            onClick={() => setBgIndex((prev) => (prev + 1) % SLIDES.length)}
             className="p-1 rounded-full hover:bg-white/20 transition-colors cursor-pointer text-white"
             aria-label="Próxima imagem"
           >
@@ -149,21 +236,21 @@ export default function Hero({ onOpenCustomGift }) {
 
         {/* Slide Indicator Dots */}
         <div className="flex items-center justify-center gap-2">
-          {slides.map((slide, idx) => (
+          {SLIDES.map((slide, idx) => (
             <button
               key={slide.id}
               onClick={() => setBgIndex(idx)}
               className={`h-2 rounded-full transition-all cursor-pointer ${
                 idx === bgIndex
                   ? 'w-8 bg-[#D4A373]'
-                  : 'w-2 bg-white/40 hover:bg-white/70'
+                  : 'w-2 bg-white/50 hover:bg-white/80'
               }`}
               title={slide.title}
             />
           ))}
         </div>
 
-        {/* 2 Main Action Buttons (Golden Ratio Balanced) */}
+        {/* 2 Main Action Buttons */}
         <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 max-w-md mx-auto pt-2">
           <a
             href="#historia"
@@ -193,7 +280,7 @@ export default function Hero({ onOpenCustomGift }) {
 
       {/* Lightbox for viewing full board experience */}
       {fullscreenImage && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fadeIn" onClick={() => setFullscreenImage(null)}>
+        <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fadeIn" style={{ zIndex: 50 }} onClick={() => setFullscreenImage(null)}>
           <div className="relative max-w-5xl w-full max-h-[92vh] overflow-hidden rounded-2xl">
             <div className="bg-[#2B2A27] p-2.5 text-white text-xs font-bold text-center border-b border-white/10 flex items-center justify-between px-4">
               <span>📋 Prancha Conceitual Completa — Paleta de Cores, Diretrizes & Planta Baixa</span>
