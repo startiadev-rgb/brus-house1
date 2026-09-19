@@ -16,7 +16,7 @@ export default function Footer({ onOpenPixConfig, pixKey }) {
             <Home size={20} />
           </div>
           <span className="font-serif font-bold text-2xl text-white tracking-tight">
-            Bru's House 🏡
+            Bru's House
           </span>
           <p className="text-xs text-white/70 max-w-sm mx-auto">
             Obrigada por fazer parte do início da nossa casa nova! Cada presente enche nosso lar de paz e amor.
@@ -36,7 +36,7 @@ export default function Footer({ onOpenPixConfig, pixKey }) {
 
         {/* Copyright */}
         <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-white/50">
-          <p>© 2026 Bru's House • Feito com muito amor ❤️</p>
+          <p>© 2026 Bru's House • Feito com muito amor</p>
           <button
             onClick={scrollToTop}
             className="text-white/60 hover:text-white flex items-center gap-1 cursor-pointer"

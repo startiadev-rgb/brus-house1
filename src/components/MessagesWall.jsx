@@ -12,7 +12,7 @@ export default function MessagesWall({ messages }) {
             <Sparkles size={14} /> Carinho das Amigas
           </div>
           <h2 className="font-serif text-3xl font-extrabold text-[#2B2A27]">
-            Recados para Bru & Cat ❤️
+            Recados para Bru & Cat
           </h2>
           <p className="text-xs sm:text-sm text-[#2B2A27]/80">
             Mensagens cheias de carinho enviadas para a Bru's House!

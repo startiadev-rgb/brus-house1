@@ -1,9 +1,9 @@
 export const CATEGORIES = [
   { id: 'todos', label: 'Todos os Mimos' },
-  { id: 'mesas-utensilios', label: '🍽️ Mesa & Utensílios' },
-  { id: 'decoracao', label: '🌿 Decoração & Conforto' },
-  { id: 'cotas', label: '✨ Cotas para o Lar (Máx R$ 400)' },
-  { id: 'custom', label: '💖 Valor Livre' },
+  { id: 'mesas-utensilios', label: 'Mesa & Utensílios' },
+  { id: 'decoracao', label: 'Decoração & Conforto' },
+  { id: 'cotas', label: 'Cotas para o Lar (Máx R$ 400)' },
+  { id: 'custom', label: 'Valor Livre' },
 ];
 
 export const GIFTS_DATA = [
@@ -154,7 +154,7 @@ export const INITIAL_MESSAGES = [
   {
     id: 'msg-lorena',
     name: 'Lorena Rosa',
-    message: 'Bru e Cat, que sonho ver essa casa tomando forma! Vocês merecem o lar mais lindo e abençoado do mundo. Já quero nosso café da tarde aí! ❤️',
+    message: 'Bru e Cat, que sonho ver essa casa tomando forma! Vocês merecem o lar mais lindo e abençoado do mundo. Já quero nosso café da tarde aí!',
     amount: 140,
     giftTitle: 'Kit de Garfos e Facas em Inox',
     date: 'Hoje'
@@ -162,7 +162,7 @@ export const INITIAL_MESSAGES = [
   {
     id: 'msg-luiza',
     name: 'Luiza Revite',
-    message: 'Amigas! Tenho certeza que a Bru\'s House vai ser o ponto de encontro de momentos inesquecíveis. Um beijo enorme pra Bru e pra Cat! 🥂✨',
+    message: 'Amigas! Tenho certeza que a Bru\'s House vai ser o ponto de encontro de momentos inesquecíveis. Um beijo enorme pra Bru e pra Cat!',
     amount: 95,
     giftTitle: 'Kit de Copos de Vidro Design',
     date: 'Ontem'

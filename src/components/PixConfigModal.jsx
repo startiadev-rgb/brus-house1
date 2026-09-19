@@ -77,7 +77,7 @@ export default function PixConfigModal({ currentKey, currentHolder, onClose, onS
           </div>
 
           <div className="bg-[#EFE6D5]/40 p-3 rounded-xl text-[11px] text-[#2B2A27]/80 leading-relaxed border border-[#D4A373]/30">
-            💡 <strong>Dica:</strong> Essa chave PIX será usada instantaneamente para gerar os QR Codes e o código "Copia e Cola" em todos os botões de presente da Landing Page.
+            <strong>Dica:</strong> Essa chave PIX será usada instantaneamente para gerar os QR Codes e o código "Copia e Cola" em todos os botões de presente da Landing Page.
           </div>
 
           <div className="pt-2 flex items-center justify-end gap-3">

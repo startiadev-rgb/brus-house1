@@ -22,7 +22,7 @@ export default function GoalTracker({ totalRaised, targetGoal = 5000, totalContr
                 <Target size={14} /> Meta da Casa Nova
               </div>
               <h2 className="font-serif text-2xl sm:text-3xl font-extrabold text-[#2B2A27]">
-                Nossa vaquinha para a montagem do lar 🏡
+                Nossa vaquinha para a montagem do lar
               </h2>
               <p className="text-xs sm:text-sm text-[#2B2A27]/80">
                 Nosso objetivo é arrecadar R$ 5.000 para cobrir itens essenciais do projeto e o aluguel da mudança.

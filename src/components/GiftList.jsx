@@ -20,7 +20,7 @@ export default function GiftList({ onSelectGift }) {
             <Gift size={14} /> Mimos para a Casa Nova
           </div>
           <h2 className="font-serif text-3xl font-extrabold text-[#2B2A27]">
-            Escolha o seu mimo 🎁
+            Escolha o seu mimo
           </h2>
           <p className="text-xs sm:text-sm text-[#2B2A27]/80">
             Clique no presente que deseja nos enviar. Os itens maiores foram divididos em cotas de até R$ 400!

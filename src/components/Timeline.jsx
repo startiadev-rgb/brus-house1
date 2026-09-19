@@ -40,7 +40,7 @@ export default function Timeline() {
         {/* Header */}
         <div className="mb-12 space-y-2">
           <span className="text-xs font-bold uppercase tracking-widest text-[#5B6E4E] bg-[#5B6E4E]/10 px-4 py-1.5 rounded-full inline-block">
-            📖 Nossa História
+            Nossa História
           </span>
           <h2 className="font-serif text-3xl font-extrabold text-[#2B2A27]">
             Um pouquinho sobre a Bru's House

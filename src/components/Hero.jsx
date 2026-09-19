@@ -1,6 +1,5 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Heart, Gift, Sparkles, MessageCircle, ChevronDown, ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react';
-import RippleDistortion from './RippleDistortion';
 
 const SLIDES = [
   {
@@ -36,16 +35,11 @@ const SLIDES = [
 export default function Hero({ onOpenCustomGift }) {
   const [bgIndex, setBgIndex] = useState(0);
   const [fullscreenImage, setFullscreenImage] = useState(null);
-  const [imagesLoaded, setImagesLoaded] = useState({});
-  const [rippleReady, setRippleReady] = useState(false);
 
   // Preload all slide images on mount
   useEffect(() => {
     SLIDES.forEach((slide) => {
       const img = new window.Image();
-      img.onload = () => {
-        setImagesLoaded((prev) => ({ ...prev, [slide.id]: true }));
-      };
       img.src = slide.src;
     });
   }, []);
@@ -54,14 +48,8 @@ export default function Hero({ onOpenCustomGift }) {
   useEffect(() => {
     const timer = setInterval(() => {
       setBgIndex((prev) => (prev + 1) % SLIDES.length);
-      // Reset ripple ready state when slide changes
-      setRippleReady(false);
     }, 4500);
     return () => clearInterval(timer);
-  }, []);
-
-  const handleRippleImageLoaded = useCallback(() => {
-    setRippleReady(true);
   }, []);
 
   const currentSlide = SLIDES[bgIndex];
@@ -73,10 +61,16 @@ export default function Hero({ onOpenCustomGift }) {
     >
       
       {/* ================================================================
-          LAYER 1: CSS Background Images (base layer, always visible)
-          This is the reliable fallback — pure <img> tags with crossfade.
+          LAYER 0: CSS Background Images (primary background)
+          pure <img> tags with crossfade and ken burns animation.
           z-index: 0
           ================================================================ */}
+      <style>{`
+        @keyframes kenBurns {
+          0% { transform: scale(1); }
+          100% { transform: scale(1.08); }
+        }
+      `}</style>
       <div
         className="absolute inset-0 overflow-hidden"
         style={{ zIndex: 0, backgroundColor: '#2B2A27' }}
@@ -88,8 +82,8 @@ export default function Hero({ onOpenCustomGift }) {
               position: 'absolute',
               inset: 0,
               opacity: index === bgIndex ? 1 : 0,
-              transform: index === bgIndex ? 'scale(1.05)' : 'scale(1)',
-              transition: 'opacity 1s ease-in-out, transform 6s ease-out',
+              animation: index === bgIndex ? 'kenBurns 6s ease-out forwards' : 'none',
+              transition: 'opacity 1s ease-in-out',
               pointerEvents: index === bgIndex ? 'auto' : 'none',
             }}
           >
@@ -108,37 +102,6 @@ export default function Hero({ onOpenCustomGift }) {
             />
           </div>
         ))}
-      </div>
-
-      {/* ================================================================
-          LAYER 2: WebGL Ripple Distortion (interactive enhancement)
-          Only visible after image loads. Falls back gracefully.
-          z-index: 1
-          ================================================================ */}
-      <div
-        className="absolute inset-0 overflow-hidden"
-        style={{
-          zIndex: 1,
-          pointerEvents: 'auto',
-          opacity: rippleReady ? 0.55 : 0,
-          transition: 'opacity 0.8s ease-in-out',
-        }}
-      >
-        <RippleDistortion
-          key={bgIndex}
-          src={SLIDES[bgIndex].src}
-          brushSize={160}
-          strength={0.25}
-          swirl={1}
-          rings={3}
-          grayscale={false}
-          tint="#C86D51"
-          tintAmount={0.06}
-          trigger="both"
-          quality="medium"
-          onImageLoaded={handleRippleImageLoaded}
-          className="w-full h-full"
-        />
       </div>
 
       {/* ================================================================
@@ -174,7 +137,7 @@ export default function Hero({ onOpenCustomGift }) {
         <div className="space-y-3 max-w-2xl mx-auto">
           <h1 className="font-serif text-4xl sm:text-5xl lg:text-6xl font-extrabold text-white tracking-tight leading-[1.12] drop-shadow-xl">
             Sejam bem-vindos à <br />
-            <span className="text-[#D4A373] italic">Bru's House 🏡</span>
+            <span className="text-[#D4A373] italic">Bru's House</span>
           </h1>
           <p className="text-xs sm:text-sm text-white/90 font-semibold tracking-wider uppercase drop-shadow-md">
             Nosso novo lar em tons terrosos, madeira & afeto
@@ -193,7 +156,7 @@ export default function Hero({ onOpenCustomGift }) {
           </div>
 
           <p className="text-sm sm:text-base text-white leading-relaxed font-normal drop-shadow-xs">
-            "Oi gente! Finalmente vamos nos mudar e estamos montando a casa com muito carinho. Preparamos esse site bem simples e leve pros amigos ajudarem a gente a deixar cada cantinho especial! Dá uma olhadinha nas fotos 3D da casa passando no fundo e escolhe um mimo pra nós! ❤️"
+            "Oi gente! Finalmente vamos nos mudar e estamos montando a casa com muito carinho. Preparamos esse site bem simples e leve pros amigos ajudarem a gente a deixar cada cantinho especial! Dá uma olhadinha nas fotos 3D da casa passando no fundo e escolhe um mimo pra nós!"
           </p>
 
           <div className="mt-4 text-right border-t border-white/15 pt-3">
@@ -256,7 +219,7 @@ export default function Hero({ onOpenCustomGift }) {
             href="#historia"
             className="w-full sm:w-1/2 bg-white hover:bg-[#EFE6D5] text-[#2B2A27] font-bold text-sm py-3.5 px-6 rounded-2xl shadow-xl transition-all text-center cursor-pointer"
           >
-            📖 Nossa História
+            Nossa História
           </a>
 
           <a
@@ -283,7 +246,7 @@ export default function Hero({ onOpenCustomGift }) {
         <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fadeIn" style={{ zIndex: 50 }} onClick={() => setFullscreenImage(null)}>
           <div className="relative max-w-5xl w-full max-h-[92vh] overflow-hidden rounded-2xl">
             <div className="bg-[#2B2A27] p-2.5 text-white text-xs font-bold text-center border-b border-white/10 flex items-center justify-between px-4">
-              <span>📋 Prancha Conceitual Completa — Paleta de Cores, Diretrizes & Planta Baixa</span>
+              <span>Prancha Conceitual Completa — Paleta de Cores, Diretrizes & Planta Baixa</span>
               <span className="text-[10px] text-[#D4A373]">Clique em ✕ para fechar</span>
             </div>
             <img src={fullscreenImage} alt="Projeto Completo" className="w-full h-full object-contain max-h-[85vh] mx-auto rounded-b-xl" />
