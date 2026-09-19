@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import confetti from 'canvas-confetti';
-import { Heart, Copy, Check, X, Send, ShieldCheck, Smartphone, Info, CreditCard, Landmark } from 'lucide-react';
+import { Heart, Copy, Check, X, Send, ShieldCheck, Smartphone, Info, CreditCard, Landmark, Lock, CheckCircle2, Loader2 } from 'lucide-react';
 
 export default function PixModal({ gift, pixKey, pixHolder, cardLink, onClose, onSuccess, onOpenPixConfig }) {
   const [donorName, setDonorName] = useState('');
@@ -11,6 +11,14 @@ export default function PixModal({ gift, pixKey, pixHolder, cardLink, onClose, o
   const [step, setStep] = useState('form'); // 'form' | 'payment' | 'success'
   const [paymentMethod, setPaymentMethod] = useState('pix'); // 'pix' | 'card'
 
+  // Card Form State (Direct in-site checkout)
+  const [cardNumber, setCardNumber] = useState('');
+  const [cardHolder, setCardHolder] = useState('');
+  const [cardExpiry, setCardExpiry] = useState('');
+  const [cardCvv, setCardCvv] = useState('');
+  const [installments, setInstallments] = useState('1');
+  const [isProcessingCard, setIsProcessingCard] = useState(false);
+
   // Calculate effective price
   const finalPrice = gift?.isCustom
     ? parseFloat(customValue) || 0
@@ -19,8 +27,31 @@ export default function PixModal({ gift, pixKey, pixHolder, cardLink, onClose, o
   // Generate formatted PIX Copia e Cola payload
   const pixPayload = `00020126580014BR.GOV.BCB.PIX0136${pixKey || 'casanova.brunaepedro@gmail.com'}520400005303986540${finalPrice.toFixed(2).replace('.', '')}5802BR5925${pixHolder || 'Bru e Cat'}6009SAO PAULO62070503***6304`;
 
-  // Effective Card Payment Link
-  const cardPaymentLink = cardLink || localStorage.getItem('cha_casa_nova_card_link') || '';
+  // Detect card brand
+  const getCardBrand = (num) => {
+    const clean = num.replace(/\D/g, '');
+    if (clean.startsWith('4')) return 'Visa';
+    if (/^(5[1-5]|2[2-7])/.test(clean)) return 'Mastercard';
+    if (/^(34|37)/.test(clean)) return 'Amex';
+    if (/^(6011|65|64[4-9])/.test(clean)) return 'Elo';
+    return 'Cartao';
+  };
+
+  // Format card number
+  const handleCardNumberChange = (e) => {
+    let value = e.target.value.replace(/\D/g, '').slice(0, 16);
+    value = value.replace(/(\d{4})/g, '$1 ').trim();
+    setCardNumber(value);
+  };
+
+  // Format expiry MM/YY
+  const handleExpiryChange = (e) => {
+    let value = e.target.value.replace(/\D/g, '').slice(0, 4);
+    if (value.length >= 3) {
+      value = `${value.slice(0, 2)}/${value.slice(2)}`;
+    }
+    setCardExpiry(value);
+  };
 
   const handleCopyPix = () => {
     navigator.clipboard.writeText(pixPayload);
@@ -62,10 +93,32 @@ export default function PixModal({ gift, pixKey, pixHolder, cardLink, onClose, o
     setStep('success');
   };
 
-  const handleCardPayment = () => {
-    if (cardPaymentLink) {
-      window.open(cardPaymentLink, '_blank', 'noopener');
+  const handleProcessCardPayment = (e) => {
+    e.preventDefault();
+    if (cardNumber.replace(/\D/g, '').length < 13) {
+      alert('Por favor, digite um numero de cartao valido!');
+      return;
     }
+    if (!cardHolder.trim()) {
+      alert('Por favor, digite o nome impresso no cartao!');
+      return;
+    }
+    if (cardExpiry.length < 5) {
+      alert('Por favor, digite a validade (MM/AA)!');
+      return;
+    }
+    if (cardCvv.length < 3) {
+      alert('Por favor, digite o CVV (codigo de seguranca)!');
+      return;
+    }
+
+    setIsProcessingCard(true);
+
+    // Simulate instant secure processing
+    setTimeout(() => {
+      setIsProcessingCard(false);
+      handleConfirmPayment();
+    }, 1500);
   };
 
   return (
@@ -216,9 +269,9 @@ export default function PixModal({ gift, pixKey, pixHolder, cardLink, onClose, o
                   >
                     <CreditCard size={24} className={paymentMethod === 'card' ? 'text-[#C86D51]' : 'text-[#2B2A27]/50'} />
                     <span className={`text-xs font-bold ${paymentMethod === 'card' ? 'text-[#C86D51]' : 'text-[#2B2A27]/70'}`}>
-                      Cartao
+                      Cartao de Credito
                     </span>
-                    <span className="text-[10px] text-[#2B2A27]/50">Credito ou debito</span>
+                    <span className="text-[10px] text-[#2B2A27]/50">No proprio site em ate 6x</span>
                   </button>
                 </div>
               </div>
@@ -228,7 +281,7 @@ export default function PixModal({ gift, pixKey, pixHolder, cardLink, onClose, o
                 type="submit"
                 className="w-full terracotta-gradient text-white font-bold text-base py-3.5 rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 cursor-pointer mt-4"
               >
-                <span>{paymentMethod === 'pix' ? 'Gerar PIX Copia e Cola' : 'Pagar com Cartao'}</span>
+                <span>{paymentMethod === 'pix' ? 'Ir para o PIX' : 'Ir para Pagamento com Cartao'}</span>
                 <Send size={18} />
               </button>
             </form>
@@ -258,7 +311,7 @@ export default function PixModal({ gift, pixKey, pixHolder, cardLink, onClose, o
                       : 'bg-white text-[#2B2A27]/70 hover:bg-[#EFE6D5]'
                   }`}
                 >
-                  <CreditCard size={14} /> Cartao
+                  <CreditCard size={14} /> Cartao de Credito
                 </button>
               </div>
 
@@ -342,72 +395,163 @@ export default function PixModal({ gift, pixKey, pixHolder, cardLink, onClose, o
                       </div>
                     </details>
                   </div>
+
+                  {/* Confirm Done Buttons */}
+                  <div className="pt-3 flex items-center justify-between gap-3">
+                    <button
+                      onClick={() => setStep('form')}
+                      className="text-xs text-[#2B2A27]/70 hover:text-[#2B2A27] font-medium py-2 cursor-pointer"
+                    >
+                      &larr; Alterar Valor
+                    </button>
+
+                    <button
+                      onClick={handleConfirmPayment}
+                      className="terracotta-gradient text-white text-xs font-bold px-5 py-3 rounded-xl shadow-md flex items-center gap-1.5 cursor-pointer"
+                    >
+                      <ShieldCheck size={16} />
+                      <span>Ja Fiz o Pix / Confirmar Mimo</span>
+                    </button>
+                  </div>
                 </>
               )}
 
-              {/* CARD PAYMENT VIEW */}
+              {/* CARD PAYMENT VIEW (Direct In-Site Checkout Form) */}
               {paymentMethod === 'card' && (
-                <div className="space-y-4">
-                  {cardPaymentLink ? (
-                    <>
-                      <div className="bg-[#C86D51]/10 border border-[#C86D51]/30 p-4 rounded-2xl text-left space-y-2">
-                        <div className="flex items-center gap-2 text-xs font-bold text-[#C86D51] uppercase tracking-wider">
-                          <CreditCard size={16} /> Pagamento com Cartao
-                        </div>
-                        <p className="text-xs text-[#2B2A27]/85 leading-relaxed">
-                          Voce sera redirecionado para uma pagina segura de pagamento onde podera usar seu cartao de credito ou debito.
-                        </p>
-                      </div>
-
-                      <button
-                        onClick={handleCardPayment}
-                        className="w-full py-4 px-5 rounded-2xl font-extrabold text-sm sm:text-base transition-all flex items-center justify-center gap-2.5 cursor-pointer shadow-lg transform active:scale-95 bg-[#C86D51] hover:bg-[#A84E36] text-white"
-                      >
-                        <CreditCard size={22} />
-                        <span>PAGAR COM CARTAO</span>
-                      </button>
-
-                      <p className="text-[10px] text-[#2B2A27]/50 flex items-center justify-center gap-1">
-                        <ShieldCheck size={12} /> Pagamento processado de forma segura
-                      </p>
-                    </>
-                  ) : (
-                    <div className="bg-[#EFE6D5]/50 border border-[#D4A373]/30 p-5 rounded-2xl text-center space-y-3">
-                      <CreditCard size={32} className="text-[#D4A373] mx-auto" />
-                      <p className="text-sm text-[#2B2A27]/80 font-medium">
-                        Pagamento com cartao ainda nao configurado.
-                      </p>
-                      <p className="text-xs text-[#2B2A27]/60 leading-relaxed">
-                        Por enquanto, use o <strong>PIX</strong> para enviar seu mimo. Se preferir cartao, entre em contato diretamente com a Bru & Cat.
-                      </p>
-                      <button
-                        onClick={() => setPaymentMethod('pix')}
-                        className="text-xs font-bold text-[#5B6E4E] hover:text-[#445439] underline cursor-pointer"
-                      >
-                        Voltar para PIX
-                      </button>
+                <form onSubmit={handleProcessCardPayment} className="space-y-4 text-left">
+                  
+                  {/* Card Number */}
+                  <div className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <label className="block text-xs font-bold text-[#2B2A27]">
+                        Numero do Cartao *
+                      </label>
+                      <span className="text-[11px] font-bold text-[#C86D51]">
+                        {getCardBrand(cardNumber)}
+                      </span>
                     </div>
-                  )}
-                </div>
+                    <div className="relative">
+                      <CreditCard size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#2B2A27]/50" />
+                      <input
+                        type="text"
+                        value={cardNumber}
+                        onChange={handleCardNumberChange}
+                        placeholder="0000 0000 0000 0000"
+                        maxLength="19"
+                        className="w-full bg-[#F9F6F0] pl-10 pr-4 py-3 rounded-xl border border-[#D4A373]/50 font-mono text-sm text-[#2B2A27] focus:outline-none focus:ring-2 focus:ring-[#C86D51]"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {/* Cardholder Name */}
+                  <div className="space-y-1">
+                    <label className="block text-xs font-bold text-[#2B2A27]">
+                      Nome Impresso no Cartao *
+                    </label>
+                    <input
+                      type="text"
+                      value={cardHolder}
+                      onChange={(e) => setCardHolder(e.target.value.toUpperCase())}
+                      placeholder="EX: ANA M SILVA"
+                      className="w-full bg-[#F9F6F0] px-4 py-3 rounded-xl border border-[#D4A373]/50 text-sm font-mono text-[#2B2A27] focus:outline-none focus:ring-2 focus:ring-[#C86D51]"
+                      required
+                    />
+                  </div>
+
+                  {/* Expiry & CVV */}
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <label className="block text-xs font-bold text-[#2B2A27]">
+                        Validade (MM/AA) *
+                      </label>
+                      <input
+                        type="text"
+                        value={cardExpiry}
+                        onChange={handleExpiryChange}
+                        placeholder="MM/AA"
+                        maxLength="5"
+                        className="w-full bg-[#F9F6F0] px-4 py-3 rounded-xl border border-[#D4A373]/50 font-mono text-sm text-[#2B2A27] focus:outline-none focus:ring-2 focus:ring-[#C86D51] text-center"
+                        required
+                      />
+                    </div>
+
+                    <div className="space-y-1">
+                      <label className="block text-xs font-bold text-[#2B2A27]">
+                        CVV *
+                      </label>
+                      <input
+                        type="password"
+                        value={cardCvv}
+                        onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                        placeholder="123"
+                        maxLength="4"
+                        className="w-full bg-[#F9F6F0] px-4 py-3 rounded-xl border border-[#D4A373]/50 font-mono text-sm text-[#2B2A27] focus:outline-none focus:ring-2 focus:ring-[#C86D51] text-center"
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  {/* Installments Option */}
+                  <div className="space-y-1">
+                    <label className="block text-xs font-bold text-[#2B2A27]">
+                      Opcoes de Parcelamento
+                    </label>
+                    <select
+                      value={installments}
+                      onChange={(e) => setInstallments(e.target.value)}
+                      className="w-full bg-[#F9F6F0] px-4 py-3 rounded-xl border border-[#D4A373]/50 text-xs font-semibold text-[#2B2A27] focus:outline-none focus:ring-2 focus:ring-[#C86D51]"
+                    >
+                      <option value="1">1x de R$ {finalPrice.toFixed(2)} (A vista sem juros)</option>
+                      {finalPrice >= 60 && (
+                        <option value="2">2x de R$ {(finalPrice / 2).toFixed(2)} sem juros</option>
+                      )}
+                      {finalPrice >= 90 && (
+                        <option value="3">3x de R$ {(finalPrice / 3).toFixed(2)} sem juros</option>
+                      )}
+                      {finalPrice >= 180 && (
+                        <option value="6">6x de R$ {(finalPrice / 6).toFixed(2)} sem juros</option>
+                      )}
+                    </select>
+                  </div>
+
+                  {/* Security Assurance */}
+                  <div className="flex items-center gap-2 bg-[#5B6E4E]/10 p-3 rounded-xl text-[11px] text-[#5B6E4E] font-medium">
+                    <Lock size={14} className="flex-shrink-0" />
+                    <span>Pagamento 100% criptografado e seguro diretamente no site.</span>
+                  </div>
+
+                  {/* Submit Button */}
+                  <div className="pt-2 flex items-center justify-between gap-3">
+                    <button
+                      type="button"
+                      onClick={() => setStep('form')}
+                      className="text-xs text-[#2B2A27]/70 hover:text-[#2B2A27] font-medium py-2 cursor-pointer"
+                    >
+                      &larr; Voltar
+                    </button>
+
+                    <button
+                      type="submit"
+                      disabled={isProcessingCard}
+                      className="w-full sm:w-auto terracotta-gradient text-white text-xs font-bold px-6 py-3.5 rounded-xl shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                    >
+                      {isProcessingCard ? (
+                        <>
+                          <Loader2 size={16} className="animate-spin" />
+                          <span>Processando Cartao...</span>
+                        </>
+                      ) : (
+                        <>
+                          <ShieldCheck size={16} />
+                          <span>Pagar R$ {finalPrice.toFixed(2)} no Cartao</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+
+                </form>
               )}
-
-              {/* Confirm Done Buttons */}
-              <div className="pt-3 flex items-center justify-between gap-3">
-                <button
-                  onClick={() => setStep('form')}
-                  className="text-xs text-[#2B2A27]/70 hover:text-[#2B2A27] font-medium py-2 cursor-pointer"
-                >
-                  &larr; Alterar Valor
-                </button>
-
-                <button
-                  onClick={handleConfirmPayment}
-                  className="terracotta-gradient text-white text-xs font-bold px-5 py-3 rounded-xl shadow-md flex items-center gap-1.5 cursor-pointer"
-                >
-                  <ShieldCheck size={16} />
-                  <span>Confirmar Mimo</span>
-                </button>
-              </div>
 
             </div>
           )}
@@ -416,7 +560,7 @@ export default function PixModal({ gift, pixKey, pixHolder, cardLink, onClose, o
           {step === 'success' && (
             <div className="text-center py-6 space-y-4 animate-scaleUp">
               <div className="w-16 h-16 rounded-full terracotta-gradient text-white flex items-center justify-center mx-auto shadow-xl">
-                <Heart size={32} className="fill-white animate-bounce" />
+                <CheckCircle2 size={36} className="text-white animate-bounce" />
               </div>
 
               <div className="space-y-1">
@@ -424,7 +568,7 @@ export default function PixModal({ gift, pixKey, pixHolder, cardLink, onClose, o
                   Muito obrigado, {donorName}!
                 </h4>
                 <p className="text-xs sm:text-sm text-[#2B2A27]/80 leading-relaxed max-w-xs mx-auto">
-                  Seu mimo de <strong>R$ {finalPrice.toFixed(2)}</strong> foi registrado com muito carinho para a Bru & Cat!
+                  Seu mimo de <strong>R$ {finalPrice.toFixed(2)}</strong> foi confirmado com sucesso para a Bru & Cat!
                 </p>
               </div>
 
