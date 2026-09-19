@@ -3,7 +3,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import confetti from 'canvas-confetti';
 import { Heart, Copy, Check, X, Send, ShieldCheck, Smartphone, Info, CreditCard, Landmark } from 'lucide-react';
 
-export default function PixModal({ gift, pixKey, pixHolder, onClose, onSuccess, onOpenPixConfig }) {
+export default function PixModal({ gift, pixKey, pixHolder, cardLink, onClose, onSuccess, onOpenPixConfig }) {
   const [donorName, setDonorName] = useState('');
   const [customValue, setCustomValue] = useState('100');
   const [message, setMessage] = useState('');
@@ -19,11 +19,8 @@ export default function PixModal({ gift, pixKey, pixHolder, onClose, onSuccess, 
   // Generate formatted PIX Copia e Cola payload
   const pixPayload = `00020126580014BR.GOV.BCB.PIX0136${pixKey || 'casanova.brunaepedro@gmail.com'}520400005303986540${finalPrice.toFixed(2).replace('.', '')}5802BR5925${pixHolder || 'Bru e Cat'}6009SAO PAULO62070503***6304`;
 
-  // Mercado Pago / Stripe payment link (configurable via localStorage)
-  const cardPaymentLink = (() => {
-    const saved = localStorage.getItem('cha_casa_nova_card_link');
-    return saved || '';
-  })();
+  // Effective Card Payment Link
+  const cardPaymentLink = cardLink || localStorage.getItem('cha_casa_nova_card_link') || '';
 
   const handleCopyPix = () => {
     navigator.clipboard.writeText(pixPayload);

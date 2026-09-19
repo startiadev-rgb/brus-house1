@@ -1,14 +1,19 @@
 import React, { useState } from 'react';
-import { X, Check, Key, User, ShieldCheck } from 'lucide-react';
+import { X, Check, Key, User, ShieldCheck, CreditCard, Link as LinkIcon } from 'lucide-react';
 
-export default function PixConfigModal({ currentKey, currentHolder, onClose, onSave }) {
-  const [key, setKey] = useState(currentKey);
-  const [holder, setHolder] = useState(currentHolder);
+export default function PixConfigModal({ currentKey, currentHolder, currentCardLink, onClose, onSave }) {
+  const [key, setKey] = useState(currentKey || '');
+  const [holder, setHolder] = useState(currentHolder || '');
+  const [cardLink, setCardLink] = useState(currentCardLink || '');
   const [saved, setSaved] = useState(false);
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    onSave({ key: key.trim(), holder: holder.trim() });
+    onSave({
+      key: key.trim(),
+      holder: holder.trim(),
+      cardLink: cardLink.trim()
+    });
     setSaved(true);
     setTimeout(() => {
       setSaved(false);
@@ -24,27 +29,28 @@ export default function PixConfigModal({ currentKey, currentHolder, onClose, onS
         <div className="bg-[#5B6E4E] p-5 text-white relative">
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 bg-black/20 hover:bg-black/40 text-white p-1 rounded-full transition-colors"
+            className="absolute top-4 right-4 bg-black/20 hover:bg-black/40 text-white p-1 rounded-full transition-colors cursor-pointer"
           >
             <X size={18} />
           </button>
           <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-white/80">
-            <Key size={14} /> Configurações de Recebimento
+            <Key size={14} /> Configuracoes de Recebimento
           </div>
           <h3 className="font-serif text-xl font-bold text-white mt-1">
-            Configurar Chave PIX Real
+            Configurar PIX & Cartao
           </h3>
           <p className="text-xs text-white/80 mt-0.5">
-            Insira o PIX onde os convidados farão os depósitos dos presentes.
+            Insira os dados onde os convidados farao os pagamentos e doacoes.
           </p>
         </div>
 
         {/* Form */}
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           
+          {/* PIX Key */}
           <div className="space-y-1">
             <label className="block text-xs font-bold text-[#2B2A27]">
-              Chave PIX (E-mail, CPF, Celular ou Aleatória)
+              Chave PIX (E-mail, CPF, Celular ou Aleatoria)
             </label>
             <div className="relative">
               <Key size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5B6E4E]" />
@@ -59,9 +65,10 @@ export default function PixConfigModal({ currentKey, currentHolder, onClose, onS
             </div>
           </div>
 
+          {/* Account Holder */}
           <div className="space-y-1">
             <label className="block text-xs font-bold text-[#2B2A27]">
-              Nome do Titular da Conta
+              Nome do Titular da Conta PIX
             </label>
             <div className="relative">
               <User size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#5B6E4E]" />
@@ -76,15 +83,35 @@ export default function PixConfigModal({ currentKey, currentHolder, onClose, onS
             </div>
           </div>
 
+          {/* Card Link */}
+          <div className="space-y-1 pt-2 border-t border-[#EFE6D5]">
+            <label className="block text-xs font-bold text-[#2B2A27]">
+              Link de Pagamento com Cartao (Opcional)
+            </label>
+            <div className="relative">
+              <CreditCard size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#C86D51]" />
+              <input
+                type="url"
+                value={cardLink}
+                onChange={(e) => setCardLink(e.target.value)}
+                placeholder="Ex: https://link.mercadopago.com.br/... ou Stripe"
+                className="w-full bg-white pl-10 pr-4 py-2.5 rounded-xl border border-[#D4A373]/50 text-sm font-mono text-[#2B2A27] focus:outline-none focus:ring-2 focus:ring-[#C86D51]"
+              />
+            </div>
+            <p className="text-[10px] text-[#2B2A27]/60 pt-0.5">
+              Crie um link de cobranca no Mercado Pago, Stripe, PicPay ou InfinitePay e cole aqui.
+            </p>
+          </div>
+
           <div className="bg-[#EFE6D5]/40 p-3 rounded-xl text-[11px] text-[#2B2A27]/80 leading-relaxed border border-[#D4A373]/30">
-            <strong>Dica:</strong> Essa chave PIX será usada instantaneamente para gerar os QR Codes e o código "Copia e Cola" em todos os botões de presente da Landing Page.
+            <strong>Como funciona:</strong> O PIX gera o QR Code e o codigo Copia e Cola instantaneamente. Se você preencher o link de cartão, o botão "Pagar com Cartão" redirecionara os convidados para a sua tela de pagamento segura.
           </div>
 
           <div className="pt-2 flex items-center justify-end gap-3">
             <button
               type="button"
               onClick={onClose}
-              className="text-xs text-[#2B2A27]/70 hover:text-[#2B2A27] font-semibold py-2 px-3"
+              className="text-xs text-[#2B2A27]/70 hover:text-[#2B2A27] font-semibold py-2 px-3 cursor-pointer"
             >
               Cancelar
             </button>
@@ -103,7 +130,7 @@ export default function PixConfigModal({ currentKey, currentHolder, onClose, onS
                 </>
               ) : (
                 <>
-                  <ShieldCheck size={14} /> Salvar Chave PIX
+                  <ShieldCheck size={14} /> Salvar Configuracoes
                 </>
               )}
             </button>

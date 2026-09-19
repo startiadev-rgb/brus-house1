@@ -10,7 +10,7 @@ import PixConfigModal from './components/PixConfigModal';
 import { INITIAL_MESSAGES, GIFTS_DATA } from './data/gifts';
 
 export default function App() {
-  // PIX Config State with localStorage
+  // Payment Config State with localStorage
   const [pixConfig, setPixConfig] = useState(() => {
     const saved = localStorage.getItem('cha_casa_nova_pix_v2');
     if (saved) {
@@ -22,17 +22,17 @@ export default function App() {
     }
     return {
       key: 'casanova.brunaepedro@gmail.com',
-      holder: 'Bru & Cat'
+      holder: 'Bru & Cat',
+      cardLink: ''
     };
   });
 
-  // Messages State with localStorage (v3 key to instantly refresh user's cache to Lorena, Luiza & Malu)
+  // Messages State with localStorage
   const [messages, setMessages] = useState(() => {
     const saved = localStorage.getItem('cha_casa_nova_messages_v3');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        // If parsed messages contain old data, fallback to INITIAL_MESSAGES
         if (parsed.some(m => m.name === 'Ana & Marcelo' || m.name === 'Tia Clarice')) {
           return INITIAL_MESSAGES;
         }
@@ -115,6 +115,7 @@ export default function App() {
           gift={selectedGift}
           pixKey={pixConfig.key}
           pixHolder={pixConfig.holder}
+          cardLink={pixConfig.cardLink}
           onClose={() => {
             setIsPixModalOpen(false);
             setSelectedGift(null);
@@ -124,11 +125,12 @@ export default function App() {
         />
       )}
 
-      {/* PIX Settings Admin Modal */}
+      {/* Settings Admin Modal */}
       {isPixConfigOpen && (
         <PixConfigModal
           currentKey={pixConfig.key}
           currentHolder={pixConfig.holder}
+          currentCardLink={pixConfig.cardLink}
           onClose={() => setIsPixConfigOpen(false)}
           onSave={handleSavePixConfig}
         />
