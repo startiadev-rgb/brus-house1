@@ -3,6 +3,54 @@ import { QRCodeSVG } from 'qrcode.react';
 import confetti from 'canvas-confetti';
 import { Heart, Copy, Check, X, Send, ShieldCheck, Smartphone, Info, CreditCard, Landmark, Lock, CheckCircle2, Loader2 } from 'lucide-react';
 
+// Standard CRC16 calculation for BCB EMV PIX Specification
+function crc16(str) {
+  let crc = 0xFFFF;
+  for (let i = 0; i < str.length; i++) {
+    crc ^= str.charCodeAt(i) << 8;
+    for (let j = 0; j < 8; j++) {
+      if ((crc & 0x8000) !== 0) {
+        crc = (crc << 1) ^ 0x1021;
+      } else {
+        crc = crc << 1;
+      }
+      crc &= 0xFFFF;
+    }
+  }
+  return crc.toString(16).toUpperCase().padStart(4, '0');
+}
+
+// Generate 100% BCB EMV compliant BR Code payload
+function generatePixPayload({ pixKey, merchantName = 'Bru e Cat', merchantCity = 'SAO PAULO', amount }) {
+  const rawKey = pixKey || '63.066.276/0001-92';
+  // Clean key for CNPJ (digits only if CNPJ)
+  const isCnpj = /^\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}$/.test(rawKey) || /^\d{14}$/.test(rawKey);
+  const cleanKey = isCnpj ? rawKey.replace(/\D/g, '') : rawKey.trim();
+  
+  const keySubtag = `01${cleanKey.length.toString().padStart(2, '0')}${cleanKey}`;
+  const merchantAccount = `0014BR.GOV.BCB.PIX${keySubtag}`;
+  const tag26 = `26${merchantAccount.length.toString().padStart(2, '0')}${merchantAccount}`;
+
+  const cleanName = merchantName.normalize('NFD').replace(/[\u0300-\u036f]/g, '').slice(0, 25);
+  const tag59 = `59${cleanName.length.toString().padStart(2, '0')}${cleanName}`;
+
+  const cleanCity = merchantCity.normalize('NFD').replace(/[\u0300-\u036f]/g, '').slice(0, 15);
+  const tag60 = `60${cleanCity.length.toString().padStart(2, '0')}${cleanCity}`;
+
+  let amountStr = '';
+  if (amount && amount > 0) {
+    const formattedAmount = amount.toFixed(2);
+    amountStr = `54${formattedAmount.length.toString().padStart(2, '0')}${formattedAmount}`;
+  }
+
+  const tag62 = `62070503***`;
+
+  const rawPayload = `000201${tag26}520400005303986${amountStr}5802BR${tag59}${tag60}${tag62}6304`;
+  const checksum = crc16(rawPayload);
+
+  return `${rawPayload}${checksum}`;
+}
+
 export default function PixModal({ gift, pixKey, pixHolder, cardLink, onClose, onSuccess, onOpenPixConfig }) {
   const [donorName, setDonorName] = useState('');
   const [customValue, setCustomValue] = useState('100');
@@ -24,8 +72,13 @@ export default function PixModal({ gift, pixKey, pixHolder, cardLink, onClose, o
     ? parseFloat(customValue) || 0
     : gift?.price || 0;
 
-  // Generate formatted PIX Copia e Cola payload
-  const pixPayload = `00020126580014BR.GOV.BCB.PIX0136${pixKey || 'casanova.brunaepedro@gmail.com'}520400005303986540${finalPrice.toFixed(2).replace('.', '')}5802BR5925${pixHolder || 'Bru e Cat'}6009SAO PAULO62070503***6304`;
+  // Generate 100% valid BCB EMV PIX Copia e Cola payload
+  const pixPayload = generatePixPayload({
+    pixKey: pixKey || '63.066.276/0001-92',
+    merchantName: pixHolder || 'Bru e Cat',
+    merchantCity: 'SAO PAULO',
+    amount: finalPrice
+  });
 
   // Detect card brand
   const getCardBrand = (num) => {
@@ -379,19 +432,19 @@ export default function PixModal({ gift, pixKey, pixHolder, cardLink, onClose, o
 
                   {/* QR Code Collapsible */}
                   <div className="pt-3 border-t border-[#EFE6D5] space-y-2">
-                    <details className="text-left group">
+                    <details className="text-left group" open>
                       <summary className="text-xs font-semibold text-[#C86D51] hover:underline cursor-pointer flex items-center gap-1">
-                        <Info size={14} /> Ver QR Code para escanear com outro celular
+                        <Info size={14} /> QR Code do Banco Inter Business
                       </summary>
                       <div className="bg-[#F9F6F0] p-4 rounded-2xl border border-[#D4A373]/30 mt-3 flex flex-col items-center space-y-2">
                         <QRCodeSVG
                           value={pixPayload}
-                          size={150}
+                          size={160}
                           level="H"
                           includeMargin={true}
                           className="rounded-lg bg-white p-2 shadow-xs"
                         />
-                        <span className="text-[10px] text-[#2B2A27]/70">Escaneie a imagem com a camera do seu banco</span>
+                        <span className="text-[10px] text-[#2B2A27]/70">Escaneie com a camera do seu banco</span>
                       </div>
                     </details>
                   </div>

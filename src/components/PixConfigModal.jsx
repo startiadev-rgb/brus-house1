@@ -58,7 +58,7 @@ export default function PixConfigModal({ currentKey, currentHolder, currentCardL
                 type="text"
                 value={key}
                 onChange={(e) => setKey(e.target.value)}
-                placeholder="Ex: casanova.brunaepedro@gmail.com ou CPF"
+                placeholder="Ex: 63.066.276/0001-92 ou e-mail"
                 className="w-full bg-white pl-10 pr-4 py-2.5 rounded-xl border border-[#D4A373]/50 text-sm font-mono text-[#2B2A27] focus:outline-none focus:ring-2 focus:ring-[#5B6E4E]"
                 required
               />

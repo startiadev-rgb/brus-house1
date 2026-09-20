@@ -9,22 +9,27 @@ import PixModal from './components/PixModal';
 import PixConfigModal from './components/PixConfigModal';
 import { INITIAL_MESSAGES, GIFTS_DATA } from './data/gifts';
 
+const DEFAULT_PIX_CONFIG = {
+  key: '63.066.276/0001-92',
+  holder: 'Bru & Cat',
+  cardLink: ''
+};
+
 export default function App() {
-  // Payment Config State with localStorage
+  // Payment Config State with localStorage (v3 key to force update to real Inter Business CNPJ key)
   const [pixConfig, setPixConfig] = useState(() => {
-    const saved = localStorage.getItem('cha_casa_nova_pix_v2');
+    const saved = localStorage.getItem('cha_casa_nova_pix_v3');
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        if (parsed.key && parsed.key !== 'casanova.brunaepedro@gmail.com') {
+          return parsed;
+        }
       } catch (e) {
         // fallback
       }
     }
-    return {
-      key: 'casanova.brunaepedro@gmail.com',
-      holder: 'Bru & Cat',
-      cardLink: ''
-    };
+    return DEFAULT_PIX_CONFIG;
   });
 
   // Messages State with localStorage
@@ -51,7 +56,7 @@ export default function App() {
 
   // Save changes to localStorage
   useEffect(() => {
-    localStorage.setItem('cha_casa_nova_pix_v2', JSON.stringify(pixConfig));
+    localStorage.setItem('cha_casa_nova_pix_v3', JSON.stringify(pixConfig));
   }, [pixConfig]);
 
   useEffect(() => {
