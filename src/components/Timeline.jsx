@@ -34,18 +34,18 @@ export default function Timeline() {
   ];
 
   return (
-    <section id="historia" className="py-16 bg-[#EFE6D5]/30 relative text-center">
+    <section id="historia" className="py-20 bg-[#EFE6D5]/30 relative text-center">
       <div className="max-w-3xl mx-auto px-4 sm:px-6">
         
         {/* Header */}
-        <div className="mb-12 space-y-2">
-          <span className="text-xs font-bold uppercase tracking-widest text-[#5B6E4E] bg-[#5B6E4E]/10 px-4 py-1.5 rounded-full inline-block">
+        <div className="mb-14 space-y-3">
+          <span className="text-xs font-bold uppercase tracking-widest text-[#5B6E4E] bg-[#5B6E4E]/10 px-4 py-1.5 rounded-full inline-block border border-[#5B6E4E]/20">
             Nossa História
           </span>
-          <h2 className="font-serif text-3xl font-extrabold text-[#2B2A27]">
+          <h2 className="font-serif text-3xl sm:text-4xl font-extrabold text-[#2B2A27] tracking-tight">
             Um pouquinho sobre a Bru's House
           </h2>
-          <p className="text-xs sm:text-sm text-[#2B2A27]/80 max-w-lg mx-auto">
+          <p className="text-xs sm:text-sm text-[#2B2A27]/75 max-w-lg mx-auto font-medium">
             A jornada de carinho da Bru & Cat até abrir as portas do nosso lar.
           </p>
         </div>
@@ -57,17 +57,17 @@ export default function Timeline() {
             return (
               <div
                 key={step.number}
-                className="glass-panel p-6 rounded-3xl border border-white text-left flex items-start gap-4 shadow-xs hover:shadow-md transition-all"
+                className="glass-panel p-6 sm:p-7 rounded-3xl text-left flex items-start gap-5 shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all duration-300 ease-spring border border-white"
               >
-                <div className="w-10 h-10 rounded-2xl terracotta-gradient flex-shrink-0 flex items-center justify-center text-white shadow-sm">
-                  <Icon size={18} />
+                <div className="w-12 h-12 rounded-2xl terracotta-gradient flex-shrink-0 flex items-center justify-center text-white shadow-md">
+                  <Icon size={20} />
                 </div>
-                <div className="space-y-1">
+                <div className="space-y-1.5 flex-grow">
                   <div className="flex items-center justify-between gap-2">
-                    <h3 className="font-serif font-bold text-lg text-[#2B2A27]">
+                    <h3 className="font-serif font-extrabold text-lg sm:text-xl text-[#2B2A27] tracking-tight">
                       {step.title}
                     </h3>
-                    <span className="text-[11px] font-bold text-[#C86D51] bg-[#C86D51]/10 px-2.5 py-0.5 rounded-full">
+                    <span className="text-[11px] font-extrabold text-[#C86D51] bg-[#C86D51]/10 px-3 py-0.5 rounded-full border border-[#C86D51]/20 uppercase tracking-wider">
                       {step.date}
                     </span>
                   </div>
@@ -80,13 +80,13 @@ export default function Timeline() {
           })}
         </div>
 
-        {/* Quote */}
-        <div className="mt-10 max-w-md mx-auto p-4 rounded-2xl bg-white border border-[#D4A373]/30 shadow-xs">
-          <p className="font-serif text-sm italic text-[#2B2A27]">
+        {/* Quote Card */}
+        <div className="mt-12 max-w-md mx-auto p-5 rounded-3xl bg-white/90 border border-[#D4A373]/30 shadow-md backdrop-blur-md">
+          <p className="font-serif text-sm sm:text-base italic font-semibold text-[#2B2A27]">
             "Obrigada por fazerem parte dessa nova fase da nossa vida!"
           </p>
-          <span className="block text-[11px] font-bold text-[#C86D51] uppercase tracking-wider mt-1">
-            — Bru & Cat <Heart size={10} className="fill-[#C86D51] inline" />
+          <span className="block text-[11px] font-bold text-[#C86D51] uppercase tracking-widest mt-2">
+            — Bru & Cat <Heart size={11} className="fill-[#C86D51] inline ml-0.5" />
           </span>
         </div>
 
