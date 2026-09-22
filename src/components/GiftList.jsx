@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { CATEGORIES, GIFTS_DATA } from '../data/gifts';
-import { Gift, Heart, Sparkles, ArrowRight } from 'lucide-react';
+import { Gift, Heart } from 'lucide-react';
 
 export default function GiftList({ onSelectGift }) {
   const [activeCategory, setActiveCategory] = useState('todos');
@@ -11,86 +11,85 @@ export default function GiftList({ onSelectGift }) {
   });
 
   return (
-    <section id="presentes" className="py-24 bg-[#F9F6F0] relative text-center">
+    <section id="presentes" className="py-20 bg-[#F6F3EC] text-[#22201D] border-b border-[#DCD2C3]">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         
-        {/* Header */}
-        <div className="max-w-3xl mx-auto mb-12 space-y-3.5">
-          <div className="inline-flex items-center gap-2 px-4.5 py-1.5 rounded-full bg-[#C86D51]/10 text-[#C86D51] text-xs font-extrabold uppercase tracking-widest border border-[#C86D51]/20">
-            <Gift size={15} /> Mimos para a Casa Nova
+        {/* Section Header */}
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10 text-left border-b border-[#DCD2C3] pb-6">
+          <div className="space-y-2 max-w-xl">
+            <h2 className="font-serif text-3xl sm:text-4xl font-bold tracking-tight text-[#22201D]">
+              Lista de Mimos & Cotas
+            </h2>
+            <p className="text-xs sm:text-sm text-[#22201D]/70 font-normal">
+              Escolha um item para o nosso lar. As cotas maiores foram divididas para facilitar o envio!
+            </p>
           </div>
-          <h2 className="font-serif text-3xl sm:text-5xl font-extrabold text-[#2B2A27] tracking-tight">
-            Escolha o seu mimo
-          </h2>
-          <p className="text-xs sm:text-sm text-[#2B2A27]/75 font-medium leading-relaxed max-w-xl mx-auto">
-            Clique no presente que deseja nos enviar. Os itens maiores foram divididos em cotas de até R$ 400!
-          </p>
+
+          {/* Category Tabs */}
+          <div className="flex items-center gap-2 flex-wrap">
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat.id}
+                onClick={() => setActiveCategory(cat.id)}
+                className={`px-3.5 py-2 text-xs font-mono font-bold uppercase tracking-wider rounded-sm transition-all cursor-pointer ${
+                  activeCategory === cat.id
+                    ? 'bg-[#22201D] text-white'
+                    : 'bg-white text-[#22201D]/70 hover:bg-[#EDE8DF] border border-[#DCD2C3]'
+                }`}
+              >
+                {cat.label}
+              </button>
+            ))}
+          </div>
         </div>
 
-        {/* Categories Pills (Centered) */}
-        <div className="flex items-center justify-center gap-3 flex-wrap mb-12">
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setActiveCategory(cat.id)}
-              className={`px-6 py-3 rounded-full text-xs font-extrabold transition-all duration-300 cursor-pointer uppercase tracking-widest ${
-                activeCategory === cat.id
-                  ? 'terracotta-gradient text-white shadow-lg scale-105 border border-white/20'
-                  : 'bg-white text-[#2B2A27]/80 hover:bg-[#EFE6D5] border border-[#EFE6D5] hover:border-[#D4A373]/50 shadow-xs'
-              }`}
-            >
-              {cat.label}
-            </button>
-          ))}
-        </div>
-
-        {/* Centered Gift Cards Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 max-w-5xl mx-auto">
+        {/* Bento & Gift Cards Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 text-left">
           {filteredGifts.map((gift) => (
             <div
               key={gift.id}
-              className={`group luxury-glass rounded-3xl overflow-hidden shadow-md hover:shadow-2xl hover:-translate-y-2 transition-all duration-500 flex flex-col justify-between border text-left ${
+              className={`bg-white rounded-sm overflow-hidden border flex flex-col justify-between transition-all duration-300 ${
                 gift.isCustom
-                  ? 'border-2 border-[#C86D51] bg-gradient-to-b from-white via-white to-[#F9F6F0]'
-                  : 'border-[#EFE6D5] hover:border-[#D4A373]/70'
+                  ? 'border-2 border-[#C86D51] md:col-span-2 lg:col-span-1 shadow-md'
+                  : 'border-[#DCD2C3] hover:border-[#C86D51]'
               }`}
             >
               <div>
-                {/* Image Container with Hover Scale */}
-                <div className="relative aspect-[16/10] w-full overflow-hidden bg-[#EFE6D5]">
+                {/* Image Aspect Box */}
+                <div className="relative aspect-[16/10] w-full overflow-hidden bg-[#EDE8DF]">
                   <img
                     src={gift.image}
                     alt={gift.title}
-                    className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
+                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                   />
                   {gift.badge && (
-                    <span className="absolute top-4 left-4 bg-[#C86D51] text-white text-[10px] font-extrabold uppercase tracking-widest px-3.5 py-1.5 rounded-full shadow-lg backdrop-blur-md border border-white/20">
+                    <span className="absolute top-3 left-3 bg-[#C86D51] text-white text-[10px] font-mono font-bold uppercase tracking-widest px-2.5 py-1 rounded-sm shadow-xs">
                       {gift.badge}
                     </span>
                   )}
                   {gift.room && (
-                    <span className="absolute bottom-3 right-3 bg-black/60 text-white text-[10px] font-mono font-bold uppercase tracking-wider px-2.5 py-1 rounded-lg backdrop-blur-md border border-white/10">
+                    <span className="absolute bottom-3 right-3 bg-[#121110]/80 text-white text-[10px] font-mono font-bold uppercase tracking-wider px-2 py-0.5 rounded-sm">
                       {gift.room}
                     </span>
                   )}
                 </div>
 
                 {/* Content */}
-                <div className="p-6 space-y-2.5">
-                  <h3 className="font-serif text-lg sm:text-xl font-bold text-[#2B2A27] group-hover:text-[#C86D51] transition-colors leading-snug tracking-tight">
+                <div className="p-5 space-y-2">
+                  <h3 className="font-serif text-lg font-bold text-[#22201D] leading-snug">
                     {gift.title}
                   </h3>
-                  <p className="text-xs text-[#2B2A27]/75 leading-relaxed font-normal">
+                  <p className="text-xs text-[#22201D]/75 leading-relaxed font-normal">
                     {gift.description}
                   </p>
                 </div>
               </div>
 
-              {/* Price & Action Footer */}
-              <div className="p-6 pt-0 mt-auto flex items-center justify-between border-t border-[#EFE6D5]/70 pt-4">
+              {/* Price & Action */}
+              <div className="p-5 pt-0 mt-auto flex items-center justify-between border-t border-[#DCD2C3]/60 pt-4">
                 <div>
-                  <span className="text-[10px] text-[#5B6E4E] font-extrabold uppercase tracking-widest block">Valor</span>
-                  <span className="font-serif text-xl font-extrabold text-[#C86D51]">
+                  <span className="text-[10px] font-mono font-bold text-[#5B6E4E] uppercase tracking-wider block">Valor</span>
+                  <span className="font-serif text-lg font-bold text-[#C86D51]">
                     {gift.isCustom
                       ? 'Você Escolhe'
                       : `R$ ${gift.price.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}`}
@@ -99,13 +98,13 @@ export default function GiftList({ onSelectGift }) {
 
                 <button
                   onClick={() => onSelectGift(gift)}
-                  className={`px-5 py-3 rounded-2xl font-extrabold text-xs transition-all duration-300 flex items-center gap-1.5 shadow-md hover:shadow-xl active:scale-95 cursor-pointer uppercase tracking-wider ${
+                  className={`px-4 py-2.5 rounded-sm font-mono font-bold text-xs uppercase tracking-wider transition-all flex items-center gap-1.5 cursor-pointer shadow-xs ${
                     gift.isCustom
-                      ? 'terracotta-gradient text-white hover:scale-105 border border-white/20'
+                      ? 'terracotta-gradient text-white hover:opacity-95'
                       : 'bg-[#5B6E4E] hover:bg-[#445439] text-white'
                   }`}
                 >
-                  <Heart size={15} className="fill-white" />
+                  <Heart size={14} className="fill-white" />
                   <span>Presentear</span>
                 </button>
               </div>
