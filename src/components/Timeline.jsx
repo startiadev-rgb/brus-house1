@@ -1,5 +1,5 @@
 import React from 'react';
-import { Heart, Key, Sparkles, Home } from 'lucide-react';
+import { Heart, Key, Sparkles, Home, Clock } from 'lucide-react';
 
 export default function Timeline() {
   const steps = [
@@ -34,43 +34,46 @@ export default function Timeline() {
   ];
 
   return (
-    <section id="historia" className="py-20 bg-[#EFE6D5]/30 relative text-center">
-      <div className="max-w-3xl mx-auto px-4 sm:px-6">
+    <section id="historia" className="py-24 bg-[#EFE6D5]/40 relative text-center">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6">
         
         {/* Header */}
-        <div className="mb-14 space-y-3">
-          <span className="text-xs font-bold uppercase tracking-widest text-[#5B6E4E] bg-[#5B6E4E]/10 px-4 py-1.5 rounded-full inline-block border border-[#5B6E4E]/20">
-            Nossa História
-          </span>
-          <h2 className="font-serif text-3xl sm:text-4xl font-extrabold text-[#2B2A27] tracking-tight">
+        <div className="mb-16 space-y-3.5">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#5B6E4E]/10 text-[#5B6E4E] text-xs font-extrabold uppercase tracking-widest border border-[#5B6E4E]/20">
+            <Clock size={14} /> Nossa História
+          </div>
+          <h2 className="font-serif text-3xl sm:text-5xl font-extrabold text-[#2B2A27] tracking-tight">
             Um pouquinho sobre a Bru's House
           </h2>
-          <p className="text-xs sm:text-sm text-[#2B2A27]/75 max-w-lg mx-auto font-medium">
+          <p className="text-xs sm:text-sm text-[#2B2A27]/75 font-medium max-w-lg mx-auto leading-relaxed">
             A jornada de carinho da Bru & Cat até abrir as portas do nosso lar.
           </p>
         </div>
 
         {/* Centered Timeline Items */}
-        <div className="space-y-6 max-w-xl mx-auto">
+        <div className="space-y-7 max-w-2xl mx-auto">
           {steps.map((step) => {
             const Icon = step.icon;
             return (
               <div
                 key={step.number}
-                className="glass-panel p-6 sm:p-7 rounded-3xl text-left flex items-start gap-5 shadow-xs hover:shadow-xl hover:-translate-y-1 transition-all duration-300 ease-spring border border-white"
+                className="luxury-glass p-7 sm:p-8 rounded-3xl text-left flex items-start gap-6 shadow-md hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 border border-white"
               >
-                <div className="w-12 h-12 rounded-2xl terracotta-gradient flex-shrink-0 flex items-center justify-center text-white shadow-md">
-                  <Icon size={20} />
+                <div className="w-14 h-14 rounded-2xl terracotta-gradient flex-shrink-0 flex items-center justify-center text-white shadow-lg border border-white/20">
+                  <Icon size={24} />
                 </div>
-                <div className="space-y-1.5 flex-grow">
-                  <div className="flex items-center justify-between gap-2">
-                    <h3 className="font-serif font-extrabold text-lg sm:text-xl text-[#2B2A27] tracking-tight">
-                      {step.title}
-                    </h3>
-                    <span className="text-[11px] font-extrabold text-[#C86D51] bg-[#C86D51]/10 px-3 py-0.5 rounded-full border border-[#C86D51]/20 uppercase tracking-wider">
+                <div className="space-y-2 flex-grow">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-xs font-mono font-bold text-[#D4A373] uppercase tracking-widest">
+                      Passo {step.number}
+                    </span>
+                    <span className="text-[11px] font-extrabold text-[#C86D51] bg-[#C86D51]/10 px-3 py-1 rounded-full border border-[#C86D51]/20 uppercase tracking-wider">
                       {step.date}
                     </span>
                   </div>
+                  <h3 className="font-serif font-extrabold text-xl sm:text-2xl text-[#2B2A27] tracking-tight">
+                    {step.title}
+                  </h3>
                   <p className="text-xs sm:text-sm text-[#2B2A27]/80 leading-relaxed font-normal">
                     {step.desc}
                   </p>
@@ -81,12 +84,12 @@ export default function Timeline() {
         </div>
 
         {/* Quote Card */}
-        <div className="mt-12 max-w-md mx-auto p-5 rounded-3xl bg-white/90 border border-[#D4A373]/30 shadow-md backdrop-blur-md">
-          <p className="font-serif text-sm sm:text-base italic font-semibold text-[#2B2A27]">
+        <div className="mt-14 max-w-lg mx-auto p-6 rounded-3xl bg-white/95 border border-[#D4A373]/35 shadow-xl backdrop-blur-xl text-center">
+          <p className="font-serif text-base sm:text-lg italic font-semibold text-[#2B2A27]">
             "Obrigada por fazerem parte dessa nova fase da nossa vida!"
           </p>
-          <span className="block text-[11px] font-bold text-[#C86D51] uppercase tracking-widest mt-2">
-            — Bru & Cat <Heart size={11} className="fill-[#C86D51] inline ml-0.5" />
+          <span className="block text-xs font-bold text-[#C86D51] uppercase tracking-widest mt-3">
+            — Bru & Cat <Heart size={12} className="fill-[#C86D51] inline ml-1" />
           </span>
         </div>
 

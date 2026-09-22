@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Heart, Gift, Sparkles, MessageCircle, ChevronDown, ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react';
+import { Heart, Gift, Sparkles, MessageCircle, ChevronDown, ChevronLeft, ChevronRight, Maximize2, Compass, ShieldCheck } from 'lucide-react';
 
 const SLIDES = [
   {
@@ -36,7 +36,7 @@ export default function Hero({ onOpenCustomGift }) {
   const [bgIndex, setBgIndex] = useState(0);
   const [fullscreenImage, setFullscreenImage] = useState(null);
 
-  // Preload all slide images on mount
+  // Preload slide images
   useEffect(() => {
     SLIDES.forEach((slide) => {
       const img = new window.Image();
@@ -44,7 +44,7 @@ export default function Hero({ onOpenCustomGift }) {
     });
   }, []);
 
-  // Automatic background slideshow (every 4.5 seconds)
+  // Automatic slideshow (4.5s)
   useEffect(() => {
     const timer = setInterval(() => {
       setBgIndex((prev) => (prev + 1) % SLIDES.length);
@@ -55,26 +55,16 @@ export default function Hero({ onOpenCustomGift }) {
   const currentSlide = SLIDES[bgIndex];
 
   return (
-    <section
-      className="relative min-h-[96vh] pt-28 pb-20 sm:pt-36 sm:pb-28 overflow-hidden flex items-center justify-center text-center"
-      style={{ backgroundColor: '#2B2A27' }}
-    >
+    <section className="relative min-h-[98vh] pt-32 pb-24 sm:pt-40 sm:pb-32 flex items-center justify-center text-center hero-mesh-bg overflow-hidden">
       
-      {/* ================================================================
-          LAYER 0: CSS Background Images (primary background)
-          pure <img> tags with crossfade and ken burns animation.
-          z-index: 0
-          ================================================================ */}
+      {/* Background Slideshow Layer */}
       <style>{`
-        @keyframes kenBurns {
+        @keyframes kenBurnsSlow {
           0% { transform: scale(1.02); }
-          100% { transform: scale(1.08); }
+          100% { transform: scale(1.10); }
         }
       `}</style>
-      <div
-        className="absolute inset-0 overflow-hidden"
-        style={{ zIndex: 0, backgroundColor: '#2B2A27' }}
-      >
+      <div className="absolute inset-0 overflow-hidden" style={{ zIndex: 0 }}>
         {SLIDES.map((slide, index) => (
           <div
             key={slide.id}
@@ -82,8 +72,8 @@ export default function Hero({ onOpenCustomGift }) {
               position: 'absolute',
               inset: 0,
               opacity: index === bgIndex ? 1 : 0,
-              animation: index === bgIndex ? 'kenBurns 6s ease-out forwards' : 'none',
-              transition: 'opacity 1.2s ease-in-out',
+              animation: index === bgIndex ? 'kenBurnsSlow 7s ease-out forwards' : 'none',
+              transition: 'opacity 1.5s ease-in-out',
               pointerEvents: index === bgIndex ? 'auto' : 'none',
             }}
           >
@@ -92,65 +82,50 @@ export default function Hero({ onOpenCustomGift }) {
               alt={slide.title}
               loading="eager"
               decoding="async"
-              style={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'cover',
-                filter: 'brightness(0.70) contrast(1.08)',
-                display: 'block',
-              }}
+              className="w-full h-full object-cover filter brightness-[0.62] contrast-[1.12]"
             />
           </div>
         ))}
       </div>
 
-      {/* ================================================================
-          LAYER 3: Dark Vignette Gradient (text readability & ratio depth)
-          z-index: 2
-          ================================================================ */}
+      {/* Dark Luxury Vignette & Radial Mesh Overlay */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
           zIndex: 2,
-          background: 'linear-gradient(to bottom, rgba(43,42,39,0.85) 0%, rgba(43,42,39,0.55) 50%, #F9F6F0 100%)',
+          background: 'radial-gradient(circle at center, rgba(26,25,23,0.40) 0%, rgba(26,25,23,0.85) 70%, #1A1917 100%), linear-gradient(to bottom, rgba(26,25,23,0.75) 0%, transparent 40%, #F9F6F0 100%)',
         }}
       />
 
-      {/* ================================================================
-          LAYER 4: Hero Content (text, buttons, controls)
-          z-index: 10
-          ================================================================ */}
-      <div
-        className="max-w-4xl mx-auto px-4 sm:px-6 relative space-y-8"
-        style={{ zIndex: 10 }}
-      >
+      {/* Main Content Container */}
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 relative space-y-10" style={{ zIndex: 10 }}>
         
-        {/* Logo Badge */}
-        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-black/50 backdrop-blur-xl border border-white/25 shadow-xl animate-float">
-          <Sparkles size={14} className="text-[#D4A373]" />
+        {/* Luxury Badge */}
+        <div className="inline-flex items-center gap-2.5 px-5 py-2 rounded-full bg-black/60 backdrop-blur-2xl border border-white/20 shadow-2xl animate-float gold-border-glow">
+          <Sparkles size={15} className="text-[#D4A373]" />
           <span className="text-xs font-bold text-white uppercase tracking-widest">
-            Bru's House • Chá de Casa Nova
+            Bru's House • Chá de Casa Nova 2026
           </span>
         </div>
 
-        {/* Golden Ratio Typography & Headline */}
-        <div className="space-y-4 max-w-3xl mx-auto">
-          <h1 className="font-serif text-4xl sm:text-6xl lg:text-7xl font-extrabold text-white tracking-tight leading-[1.08] drop-shadow-2xl">
+        {/* Editorial Title */}
+        <div className="space-y-4 max-w-4xl mx-auto">
+          <h1 className="font-serif text-4xl sm:text-6xl lg:text-7xl font-extrabold text-white tracking-tight leading-[1.06] drop-shadow-2xl">
             Sejam bem-vindos à <br />
-            <span className="text-[#D4A373] italic font-normal">Bru's House</span>
+            <span className="gold-gradient-text italic font-normal">Bru's House</span>
           </h1>
-          <p className="text-xs sm:text-sm text-white/90 font-bold tracking-widest uppercase drop-shadow-md max-w-lg mx-auto">
-            Nosso novo lar em tons terrosos, madeira & afeto
+          <p className="text-xs sm:text-sm text-white/90 font-bold tracking-widest uppercase drop-shadow-lg max-w-xl mx-auto">
+            Nosso novo lar projetado em tons terrosos, madeira & afeto
           </p>
         </div>
 
-        {/* WhatsApp-style Intimate Card (High Contrast Glassmorphism) */}
-        <div className="bg-[#2B2A27]/90 backdrop-blur-2xl p-6 sm:p-8 rounded-3xl shadow-2xl border border-white/25 max-w-xl mx-auto text-left relative transition-all duration-300">
-          <div className="flex items-center justify-between gap-2 mb-3.5">
-            <div className="flex items-center gap-2 text-xs font-extrabold text-[#D4A373] uppercase tracking-wider">
-              <MessageCircle size={16} className="text-[#D4A373]" /> Mensagem da Bru & Cat
+        {/* High-Contrast Glassmorphic Card (Message from Bru & Cat) */}
+        <div className="luxury-glass-dark p-7 sm:p-9 rounded-3xl max-w-2xl mx-auto text-left relative transition-all duration-300">
+          <div className="flex items-center justify-between gap-2 mb-4">
+            <div className="flex items-center gap-2.5 text-xs font-extrabold text-[#D4A373] uppercase tracking-wider">
+              <MessageCircle size={17} className="text-[#D4A373]" /> Mensagem da Bru & Cat
             </div>
-            <span className="text-[10px] text-white/75 bg-white/10 px-2.5 py-0.5 rounded-full font-mono font-semibold">
+            <span className="text-[10px] text-white/70 bg-white/10 px-3 py-1 rounded-full font-mono font-semibold uppercase tracking-wider">
               Agora
             </span>
           </div>
@@ -159,54 +134,56 @@ export default function Hero({ onOpenCustomGift }) {
             "Oi gente! Finalmente vamos nos mudar e estamos montando a casa com muito carinho. Preparamos esse site bem simples e leve pros amigos ajudarem a gente a deixar cada cantinho especial! Dá uma olhadinha nas fotos 3D da casa passando no fundo e escolhe um mimo pra nós!"
           </p>
 
-          <div className="mt-5 text-right border-t border-white/15 pt-3.5">
+          <div className="mt-6 text-right border-t border-white/15 pt-4 flex items-center justify-between">
+            <span className="text-[11px] text-white/60 font-mono">Projeto 3D • Arquitetura Afetiva</span>
             <span className="font-serif italic font-bold text-xs text-[#D4A373] tracking-wide">
               — Bru & Cat <Heart size={13} className="fill-[#C86D51] text-[#C86D51] inline ml-1" />
             </span>
           </div>
         </div>
 
-        {/* Background Slideshow Controls & Info Indicator */}
-        <div className="bg-black/75 backdrop-blur-xl p-3 px-6 rounded-2xl border border-white/25 max-w-md mx-auto flex items-center justify-between gap-3 text-white text-xs shadow-2xl">
+        {/* Room Indicator & Controls Bar */}
+        <div className="bg-black/80 backdrop-blur-2xl p-3.5 px-6 rounded-2xl border border-white/20 max-w-lg mx-auto flex items-center justify-between gap-4 text-white text-xs shadow-2xl">
           <button
             onClick={() => setBgIndex((prev) => (prev - 1 + SLIDES.length) % SLIDES.length)}
-            className="p-1.5 rounded-full hover:bg-white/20 transition-colors cursor-pointer text-white"
+            className="p-2 rounded-full hover:bg-white/20 transition-colors cursor-pointer text-white"
             aria-label="Imagem anterior"
           >
-            <ChevronLeft size={18} />
+            <ChevronLeft size={19} />
           </button>
 
-          <div className="flex items-center gap-2 overflow-hidden">
-            <span className="font-bold text-[#D4A373] truncate tracking-wide">
+          <div className="flex items-center gap-3 overflow-hidden">
+            <Compass size={16} className="text-[#D4A373] flex-shrink-0" />
+            <span className="font-bold text-[#D4A373] truncate tracking-wide text-xs">
               {currentSlide.title}
             </span>
             <button
               onClick={() => setFullscreenImage(currentSlide.boardSrc)}
-              className="text-[10px] bg-white/20 hover:bg-white/30 text-white font-bold px-3 py-1 rounded-lg transition-all flex items-center gap-1 cursor-pointer flex-shrink-0 uppercase tracking-wider"
+              className="text-[10px] bg-white/20 hover:bg-white/30 text-white font-extrabold px-3 py-1.5 rounded-lg transition-all flex items-center gap-1 cursor-pointer flex-shrink-0 uppercase tracking-wider border border-white/15"
             >
-              <Maximize2 size={11} /> Prancha
+              <Maximize2 size={12} /> Prancha
             </button>
           </div>
 
           <button
             onClick={() => setBgIndex((prev) => (prev + 1) % SLIDES.length)}
-            className="p-1.5 rounded-full hover:bg-white/20 transition-colors cursor-pointer text-white"
+            className="p-2 rounded-full hover:bg-white/20 transition-colors cursor-pointer text-white"
             aria-label="Próxima imagem"
           >
-            <ChevronRight size={18} />
+            <ChevronRight size={19} />
           </button>
         </div>
 
         {/* Slide Indicator Dots */}
-        <div className="flex items-center justify-center gap-2 pt-1">
+        <div className="flex items-center justify-center gap-2.5">
           {SLIDES.map((slide, idx) => (
             <button
               key={slide.id}
               onClick={() => setBgIndex(idx)}
-              className={`h-2 rounded-full transition-all duration-300 cursor-pointer ${
+              className={`h-2.5 rounded-full transition-all duration-300 cursor-pointer ${
                 idx === bgIndex
-                  ? 'w-8 bg-[#D4A373]'
-                  : 'w-2 bg-white/40 hover:bg-white/80'
+                  ? 'w-9 bg-[#D4A373]'
+                  : 'w-2.5 bg-white/30 hover:bg-white/70'
               }`}
               title={slide.title}
             />
@@ -217,14 +194,14 @@ export default function Hero({ onOpenCustomGift }) {
         <div className="flex flex-col sm:flex-row items-center justify-center gap-4 max-w-md mx-auto pt-2">
           <a
             href="#historia"
-            className="w-full sm:w-1/2 bg-white hover:bg-[#EFE6D5] text-[#2B2A27] font-extrabold text-xs py-4 px-6 rounded-2xl shadow-xl hover:shadow-2xl transition-all duration-300 ease-spring text-center cursor-pointer uppercase tracking-widest border border-white/80"
+            className="w-full sm:w-1/2 bg-white hover:bg-[#EFE6D5] text-[#2B2A27] font-extrabold text-xs py-4 px-7 rounded-2xl shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 text-center cursor-pointer uppercase tracking-widest border border-white"
           >
             Nossa História
           </a>
 
           <a
             href="#presentes"
-            className="w-full sm:w-1/2 terracotta-gradient text-white font-extrabold text-xs py-4 px-6 rounded-2xl shadow-xl hover:shadow-2xl transform hover:-translate-y-0.5 active:scale-98 transition-all duration-300 ease-spring text-center cursor-pointer flex items-center justify-center gap-2 uppercase tracking-widest border border-white/20"
+            className="w-full sm:w-1/2 terracotta-gradient text-white font-extrabold text-xs py-4 px-7 rounded-2xl shadow-2xl hover:scale-105 active:scale-95 transition-all duration-300 text-center cursor-pointer flex items-center justify-center gap-2 uppercase tracking-widest border border-white/25"
           >
             <Gift size={18} />
             <span>Escolher Mimo</span>
@@ -233,26 +210,26 @@ export default function Hero({ onOpenCustomGift }) {
 
         {/* Scroll indicator */}
         <div className="pt-6 text-center">
-          <a href="#presentes" className="inline-flex items-center gap-1.5 text-xs font-bold uppercase tracking-widest text-[#5B6E4E] hover:text-[#C86D51] transition-colors">
+          <a href="#presentes" className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#5B6E4E] hover:text-[#C86D51] transition-colors">
             <span>Ver a lista de mimos</span>
-            <ChevronDown size={16} className="animate-bounce" />
+            <ChevronDown size={17} className="animate-bounce" />
           </a>
         </div>
 
       </div>
 
-      {/* Lightbox for viewing full board experience */}
+      {/* Lightbox for Viewing Concept Board */}
       {fullscreenImage && (
-        <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/90 backdrop-blur-md animate-fadeIn" style={{ zIndex: 50 }} onClick={() => setFullscreenImage(null)}>
-          <div className="relative max-w-5xl w-full max-h-[92vh] overflow-hidden rounded-3xl border border-white/20 shadow-2xl">
-            <div className="bg-[#2B2A27] p-3 text-white text-xs font-bold text-center border-b border-white/10 flex items-center justify-between px-5">
-              <span className="uppercase tracking-wider">Prancha Conceitual Completa — Paleta de Cores, Diretrizes & Planta Baixa</span>
-              <span className="text-[10px] text-[#D4A373]">Clique em ✕ para fechar</span>
+        <div className="fixed inset-0 flex items-center justify-center p-4 bg-black/95 backdrop-blur-xl animate-fadeIn" style={{ zIndex: 60 }} onClick={() => setFullscreenImage(null)}>
+          <div className="relative max-w-5xl w-full max-h-[92vh] overflow-hidden rounded-3xl border border-white/20 shadow-2xl bg-[#1A1917]">
+            <div className="p-3.5 text-white text-xs font-bold text-center border-b border-white/10 flex items-center justify-between px-6">
+              <span className="uppercase tracking-widest text-[#D4A373]">Prancha Conceitual Completa — Paleta de Cores, Diretrizes & Planta Baixa</span>
+              <span className="text-[10px] text-white/60">Clique em ✕ para fechar</span>
             </div>
-            <img src={fullscreenImage} alt="Projeto Completo" className="w-full h-full object-contain max-h-[85vh] mx-auto rounded-b-2xl" />
+            <img src={fullscreenImage} alt="Projeto Completo" className="w-full h-full object-contain max-h-[85vh] mx-auto rounded-b-2xl p-2" />
             <button
               onClick={() => setFullscreenImage(null)}
-              className="absolute top-4 right-4 bg-white/20 hover:bg-white text-white hover:text-black p-2 rounded-full transition-colors cursor-pointer shadow-lg"
+              className="absolute top-4 right-4 bg-white/20 hover:bg-white text-white hover:text-black p-2.5 rounded-full transition-colors cursor-pointer shadow-lg"
             >
               ✕
             </button>
