@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import confetti from 'canvas-confetti';
-import { Check, Copy, CreditCard, ExternalLink, LoaderCircle, QrCode, X } from 'lucide-react';
+import { Check, Copy, CreditCard, LoaderCircle, QrCode, X } from 'lucide-react';
 
 const CARD_FEE_RATE = Number(import.meta.env.VITE_MP_CARD_FEE_RATE || '0.0498');
 const CARD_INSTALLMENTS = 3;
@@ -37,7 +37,7 @@ function generatePixPayload({ pixKey, merchantName, amount }) {
   return `${rawPayload}${crc16(rawPayload)}`;
 }
 
-export default function PixModal({ gift, pixKey, pixHolder, cardLink, onClose, onSuccess }) {
+export default function PixModal({ gift, pixKey, pixHolder, onClose, onSuccess }) {
   const [name, setName] = useState('');
   const [message, setMessage] = useState('');
   const [customValue, setCustomValue] = useState('100');
@@ -113,9 +113,7 @@ export default function PixModal({ gift, pixKey, pixHolder, cardLink, onClose, o
     setCardState('loading');
     setCardError('');
 
-    const items = gift.items
-      ? gift.items.map((item) => ({ id: item.id, quantity: item.quantity }))
-      : [{ id: gift.id, quantity: 1, ...(gift.isCustom ? { customAmount: finalPrice } : {}) }];
+    const items = [{ id: gift.id, quantity: 1, ...(gift.isCustom ? { customAmount: finalPrice } : {}) }];
 
     try {
       const checkoutResponse = await fetch('/api/mercado-pago-checkout', {
@@ -137,9 +135,7 @@ export default function PixModal({ gift, pixKey, pixHolder, cardLink, onClose, o
       id: `gift-${Date.now()}`,
       name: name.trim(),
       message: message.trim() || 'Que essa casa seja cheia de encontros bons!',
-      giftTitle: gift.items
-        ? gift.items.map((item) => `${item.quantity > 1 ? `${item.quantity}× ` : ''}${item.title}`).join(' + ')
-        : gift.title,
+      giftTitle: gift.title,
       date: 'Agora',
     });
     confetti({
@@ -157,7 +153,7 @@ export default function PixModal({ gift, pixKey, pixHolder, cardLink, onClose, o
       <section ref={modalRef} className="pix-modal" role="dialog" aria-modal="true" aria-labelledby="pix-modal-title">
         <header className="pix-modal-header">
           <div>
-            <small>{gift.items ? 'Seus mimos' : 'Seu mimo'}</small>
+            <small>Escolha como pagar</small>
             <h2 id="pix-modal-title">{gift.title}</h2>
           </div>
           <button ref={closeButtonRef} type="button" className="icon-button" onClick={onClose} aria-label="Fechar">
@@ -173,11 +169,6 @@ export default function PixModal({ gift, pixKey, pixHolder, cardLink, onClose, o
                 <span className="money-input"><b>R$</b><input type="number" min="1" step="1" value={customValue} onChange={(event) => setCustomValue(event.target.value)} required /></span>
               </label>
             )}
-            {gift.items && (
-              <div className="pix-cart-summary">
-                {gift.items.map((item) => <span key={item.id}><b>{item.quantity}× {item.title}</b><small>{(item.price * item.quantity).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</small></span>)}
-              </div>
-            )}
             {!gift.isCustom && <p className="pix-price">{finalPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>}
             <label className="field">
               <span>Seu nome</span>
@@ -190,14 +181,16 @@ export default function PixModal({ gift, pixKey, pixHolder, cardLink, onClose, o
             <div className="payment-options" aria-label="Escolha como pagar">
               <section className="payment-option">
                 <span className="payment-option-heading"><QrCode size={19} aria-hidden="true" /><b>PIX à vista</b><small>Sem taxa</small></span>
+                <p className="payment-recipient">Inter · Catarina</p>
                 <strong>{finalPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong>
                 <button className="primary-button" type="submit">Gerar PIX</button>
               </section>
               <section className="payment-option">
                 <span className="payment-option-heading"><CreditCard size={19} aria-hidden="true" /><b>Cartão de crédito</b><small>Até {CARD_INSTALLMENTS}x</small></span>
+                <p className="payment-recipient">Mercado Pago · Bruna Bueno</p>
                 <div className="card-breakdown">
                   <span><small>Subtotal</small><b>{finalPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</b></span>
-                  <span><small>Acréscimo do cartão ({(CARD_FEE_RATE * 100).toLocaleString('pt-BR', { maximumFractionDigits: 2 })}%)</small><b>{cardFee.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</b></span>
+                  <span><small>Acréscimo do cartão ({(CARD_FEE_RATE * 100).toLocaleString('pt-BR', { maximumFractionDigits: 2 })}%)</small><b>+ {cardFee.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</b></span>
                 </div>
                 <strong>{finalCardPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} <small>ou até {CARD_INSTALLMENTS}× de {(finalCardPrice / CARD_INSTALLMENTS).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</small></strong>
                 <button className="secondary-button" type="button" onClick={startCardCheckout} disabled={cardState === 'loading'}>
@@ -225,11 +218,6 @@ export default function PixModal({ gift, pixKey, pixHolder, cardLink, onClose, o
             </span>
             {copyState === 'error' && <p className="inline-error">Não foi possível copiar. Selecione o código abaixo.</p>}
             <textarea className="pix-code" readOnly value={pixPayload} aria-label="Código PIX copia e cola" />
-            {cardLink && (
-              <a className="secondary-button" href={cardLink} target="_blank" rel="noreferrer">
-                Pagar por cartão em checkout seguro <ExternalLink size={16} />
-              </a>
-            )}
             <div className="pix-confirmation">
               <p>O site não confere o pagamento automaticamente. Depois de transferir, salve seu recado neste aparelho.</p>
               <button type="button" className="secondary-button" onClick={saveMessage}>Já fiz o PIX</button>

@@ -150,11 +150,11 @@ Filtros são pills horizontais transparentes com 44px de altura, contorno e text
 
 Recados são superfícies altas, arejadas e com conteúdo truncado em três linhas. O modal mantém hierarquia funcional: título, campos, ação primária, confirmação honesta e retorno de sucesso. Em telas pequenas, ancora no rodapé e respeita `100dvh`.
 
-### Carrinho de cotas
+### Pagamento direto
 
-O botão do topo mostra a quantidade total e abre um drawer lateral no desktop ou bottom sheet no mobile. Cada mimo pode ser somado mais de uma vez; a revisão permite aumentar, diminuir ou remover itens antes de gerar um único PIX pelo total. Controles seguem o tema claro fixo, com fundo transparente, texto preto e alvos de toque de pelo menos 44px.
+Cada card de mimo abre diretamente o bottom sheet de pagamento, sem carrinho ou etapa intermediária. No topo, a ação “Escolher mimo” apenas leva à grade e nunca armazena itens silenciosamente.
 
-No checkout, PIX e cartão aparecem como opções paralelas no desktop e empilhadas no mobile. PIX apresenta o subtotal sem taxa; cartão mostra subtotal, acréscimo, total e estimativa de até três parcelas antes do redirecionamento seguro ao Mercado Pago.
+PIX e cartão aparecem como opções paralelas no desktop e empilhadas no mobile. PIX identifica “Inter · Catarina”, à vista e sem taxa. Cartão identifica “Mercado Pago · Bruna Bueno” e mostra subtotal, percentual e valor do acréscimo, total e estimativa de até três parcelas antes do redirecionamento seguro ao Mercado Pago.
 
 ## Do's and Don'ts
 

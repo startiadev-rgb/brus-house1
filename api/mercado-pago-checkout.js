@@ -8,7 +8,7 @@ function grossUp(subtotal, rate) {
 
 function buildItems(inputItems) {
   if (!Array.isArray(inputItems) || inputItems.length === 0 || inputItems.length > 30) {
-    throw new Error('Carrinho inválido.');
+    throw new Error('Pagamento inválido.');
   }
 
   return inputItems.map((input) => {
@@ -23,7 +23,7 @@ function buildItems(inputItems) {
     const gift = GIFTS_DATA.find((entry) => entry.id === input.id && !entry.isCustom);
     const quantity = Number(input.quantity);
     if (!gift || !Number.isInteger(quantity) || quantity < 1 || quantity > 20) {
-      throw new Error('Item do carrinho inválido.');
+      throw new Error('Mimo inválido.');
     }
     return { id: gift.id, title: gift.title, quantity, unit_price: gift.price };
   });

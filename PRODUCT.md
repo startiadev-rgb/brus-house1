@@ -27,8 +27,8 @@ A pagina e compartilhada por link e acessada majoritariamente em celulares. O ca
 - React 19, Vite 8 e Tailwind CSS 4.
 - Hospedagem atual na Vercel.
 - Pagamento principal por PIX com valor associado ao mimo.
-- O carrinho permite combinar diferentes cotas, ajustar quantidades e gerar um unico PIX pelo total.
-- O checkout oferece PIX a vista sem taxa e cartao via Mercado Pago Checkout Pro, com acrescimo transparente e no maximo tres parcelas.
+- Cada mimo abre diretamente a escolha de pagamento, sem carrinho ou etapa intermediaria.
+- O checkout oferece PIX Inter para Catarina, a vista e sem taxa, ou cartao para Bruna Bueno via Mercado Pago Checkout Pro, com acrescimo transparente e no maximo tres parcelas.
 - O site nao possui backend ou confirmacao bancaria automatica.
 - Configuracoes e comentarios atuais usam localStorage e nao sao compartilhados entre visitantes.
 - Cartao so pode ser oferecido por checkout externo real; o site nao deve coletar numero, validade ou CVV diretamente.
