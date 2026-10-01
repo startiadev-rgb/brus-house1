@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Gift, ChevronRight, Maximize2, Compass, MessageSquareQuote } from 'lucide-react';
+import { Gift, Maximize2, Compass } from 'lucide-react';
 
 const SLIDES = [
   {
@@ -47,7 +47,7 @@ export default function Hero({ onOpenCustomGift }) {
   const currentSlide = SLIDES[bgIndex];
 
   return (
-    <section className="relative min-h-[95vh] pt-32 pb-20 sm:pt-40 sm:pb-28 bg-[#121110] text-white overflow-hidden flex items-center">
+    <section className="relative min-h-[90vh] pt-32 pb-20 sm:pt-36 sm:pb-24 bg-[#121110] text-white overflow-hidden flex items-center">
       
       {/* Background Slideshow Layer */}
       <div className="absolute inset-0 overflow-hidden" style={{ zIndex: 0 }}>
@@ -66,38 +66,32 @@ export default function Hero({ onOpenCustomGift }) {
               src={slide.src}
               alt={slide.title}
               loading="eager"
-              className="w-full h-full object-cover filter brightness-[0.45] contrast-[1.15]"
+              className="w-full h-full object-cover filter brightness-[0.55] contrast-[1.10]"
             />
           </div>
         ))}
       </div>
 
-      {/* Dark Vignette Overlay */}
+      {/* Dark Overlay Gradient */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
           zIndex: 1,
-          background: 'linear-gradient(to right, #121110 0%, rgba(18,17,16,0.85) 55%, rgba(18,17,16,0.4) 100%), linear-gradient(to bottom, transparent 60%, #F6F3EC 100%)',
+          background: 'linear-gradient(to right, #121110 0%, rgba(18,17,16,0.75) 50%, rgba(18,17,16,0.3) 100%), linear-gradient(to bottom, transparent 65%, #F6F3EC 100%)',
         }}
       />
 
-      {/* Main Content Grid (Asymmetrical 50/50 Layout) */}
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 relative w-full grid grid-cols-1 lg:grid-cols-12 gap-12 items-center" style={{ zIndex: 10 }}>
+      {/* Main Content Layout */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 relative w-full" style={{ zIndex: 10 }}>
         
-        {/* Left Column: Editorial Headline & Actions */}
-        <div className="lg:col-span-7 text-left space-y-7">
+        <div className="max-w-2xl text-left space-y-7">
           
-          <div className="inline-flex items-center gap-2 text-xs font-mono font-bold text-[#D4A373] tracking-widest uppercase">
-            <span className="w-2 h-2 rounded-full bg-[#C86D51] inline-block animate-pulse" />
-            Projeto Afetivo 2026
-          </div>
-
           <h1 className="font-serif text-4xl sm:text-6xl lg:text-7xl font-bold text-white tracking-tight leading-[1.05] drop-shadow-xl">
             O novo lar da <br />
             <span className="text-[#D4A373]">Bru & Cat</span> em tons terrosos e madeira.
           </h1>
 
-          <p className="text-sm sm:text-base text-white/80 leading-relaxed font-normal max-w-xl">
+          <p className="text-sm sm:text-base text-white/85 leading-relaxed font-normal max-w-xl">
             Abrimos as portas do nosso projeto de casa nova. Preparamos uma lista especial de mimos e cotas para quem quiser nos ajudar a montar cada cantinho!
           </p>
 
@@ -121,9 +115,16 @@ export default function Hero({ onOpenCustomGift }) {
 
           {/* Room Selector Tabs */}
           <div className="pt-6 border-t border-white/15 space-y-2">
-            <span className="text-[10px] font-mono text-white/50 uppercase tracking-widest block">
-              Explorar Ambientes 3D:
-            </span>
+            <div className="flex items-center justify-between text-[10px] font-mono text-white/60 uppercase tracking-widest">
+              <span>Ambiente: <strong className="text-[#D4A373] font-bold">{currentSlide.title}</strong></span>
+              <button
+                onClick={() => setFullscreenImage(currentSlide.boardSrc)}
+                className="text-white/80 hover:text-white flex items-center gap-1 bg-white/10 px-2 py-1 rounded-sm transition-colors cursor-pointer"
+              >
+                <Maximize2 size={10} /> Ver Prancha 3D
+              </button>
+            </div>
+            
             <div className="flex flex-wrap gap-2">
               {SLIDES.map((slide, idx) => (
                 <button
@@ -139,39 +140,6 @@ export default function Hero({ onOpenCustomGift }) {
                 </button>
               ))}
             </div>
-          </div>
-
-        </div>
-
-        {/* Right Column: Intimate Message Card & Active Room Preview */}
-        <div className="lg:col-span-5 text-left space-y-6">
-          
-          {/* Active Room Info Card */}
-          <div className="bg-[#181715]/90 backdrop-blur-xl p-6 rounded-sm border border-white/15 shadow-2xl space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-mono font-bold text-[#D4A373] uppercase tracking-wider flex items-center gap-1.5">
-                <Compass size={14} /> {currentSlide.title}
-              </span>
-              <button
-                onClick={() => setFullscreenImage(currentSlide.boardSrc)}
-                className="text-[10px] font-mono text-white/70 hover:text-white flex items-center gap-1 bg-white/10 px-2 py-1 rounded-sm transition-colors"
-              >
-                <Maximize2 size={10} /> Prancha
-              </button>
-            </div>
-            <p className="text-xs text-white/80 leading-relaxed font-normal">
-              {currentSlide.desc}
-            </p>
-          </div>
-
-          {/* WhatsApp / Personal Note */}
-          <div className="bg-[#181715]/80 backdrop-blur-xl p-6 rounded-sm border border-[#D4A373]/30 shadow-xl space-y-3">
-            <div className="flex items-center gap-2 text-xs font-mono font-bold text-[#C86D51] uppercase tracking-wider">
-              <MessageSquareQuote size={16} /> Recado da Bru & Cat
-            </div>
-            <p className="text-xs sm:text-sm text-white/90 leading-relaxed italic">
-              "Oi gente! Finalmente vamos nos mudar e estamos montando a casa com muito carinho. Escolha um mimo pra gente deixar o nosso lar completo!"
-            </p>
           </div>
 
         </div>

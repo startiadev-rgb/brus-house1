@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Home, Gift, Menu, X } from 'lucide-react';
+import { Gift, Menu, X } from 'lucide-react';
 
 export default function Navbar({ onOpenCustomGift }) {
   const [scrolled, setScrolled] = useState(false);
@@ -30,19 +30,14 @@ export default function Navbar({ onOpenCustomGift }) {
     >
       <div className="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between">
         
-        {/* Brand Lockup - Impeccable Style */}
-        <a href="#" className="flex items-center gap-3 group">
-          <div className="w-9 h-9 rounded-sm bg-[#C86D51] flex items-center justify-center text-white font-bold text-sm shadow-sm group-hover:bg-[#D4A373] transition-colors">
-            <Home size={18} />
-          </div>
-          <div className="text-left">
-            <span className="font-serif font-bold text-lg sm:text-xl text-white tracking-tight block leading-none">
-              Bru's House
-            </span>
-            <span className="text-[10px] font-mono text-[#D4A373] uppercase tracking-widest block mt-1">
-              Chá de Casa Nova
-            </span>
-          </div>
+        {/* Brand Lockup - Clean Editorial */}
+        <a href="#" className="text-left group">
+          <span className="font-serif font-bold text-xl sm:text-2xl text-white tracking-tight block leading-none">
+            Bru's House
+          </span>
+          <span className="text-[10px] font-mono text-[#D4A373] uppercase tracking-widest block mt-1">
+            Chá de Casa Nova
+          </span>
         </a>
 
         {/* Desktop Navigation */}
