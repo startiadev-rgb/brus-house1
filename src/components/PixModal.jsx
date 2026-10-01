@@ -1,651 +1,252 @@
-import React, { useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { QRCodeSVG } from 'qrcode.react';
 import confetti from 'canvas-confetti';
-import { Heart, Copy, Check, X, Send, ShieldCheck, Smartphone, Info, CreditCard, Landmark, Lock, CheckCircle2, Loader2 } from 'lucide-react';
+import { Check, Copy, CreditCard, ExternalLink, LoaderCircle, QrCode, X } from 'lucide-react';
 
-// Standard CRC16 calculation for BCB EMV PIX Specification
-function crc16(str) {
-  let crc = 0xFFFF;
-  for (let i = 0; i < str.length; i++) {
-    crc ^= str.charCodeAt(i) << 8;
-    for (let j = 0; j < 8; j++) {
-      if ((crc & 0x8000) !== 0) {
-        crc = (crc << 1) ^ 0x1021;
-      } else {
-        crc = crc << 1;
-      }
-      crc &= 0xFFFF;
+const CARD_FEE_RATE = Number(import.meta.env.VITE_MP_CARD_FEE_RATE || '0.0498');
+const CARD_INSTALLMENTS = 3;
+
+function cardPrice(subtotal) {
+  return Math.ceil((subtotal / (1 - CARD_FEE_RATE)) * 100) / 100;
+}
+
+function crc16(value) {
+  let crc = 0xffff;
+  for (let index = 0; index < value.length; index += 1) {
+    crc ^= value.charCodeAt(index) << 8;
+    for (let bit = 0; bit < 8; bit += 1) {
+      crc = (crc & 0x8000) !== 0 ? (crc << 1) ^ 0x1021 : crc << 1;
+      crc &= 0xffff;
     }
   }
   return crc.toString(16).toUpperCase().padStart(4, '0');
 }
 
-// Generate 100% BCB EMV compliant BR Code payload
-function generatePixPayload({ pixKey, merchantName = 'Bru e Cat', merchantCity = 'SAO PAULO', amount }) {
-  const rawKey = pixKey || '63.066.276/0001-92';
-  // Clean key for CNPJ (digits only if CNPJ)
+function generatePixPayload({ pixKey, merchantName, amount }) {
+  const rawKey = pixKey || '';
   const isCnpj = /^\d{2}\.?\d{3}\.?\d{3}\/?\d{4}-?\d{2}$/.test(rawKey) || /^\d{14}$/.test(rawKey);
   const cleanKey = isCnpj ? rawKey.replace(/\D/g, '') : rawKey.trim();
-  
-  const keySubtag = `01${cleanKey.length.toString().padStart(2, '0')}${cleanKey}`;
-  const merchantAccount = `0014BR.GOV.BCB.PIX${keySubtag}`;
-  const tag26 = `26${merchantAccount.length.toString().padStart(2, '0')}${merchantAccount}`;
-
+  const keyField = `01${String(cleanKey.length).padStart(2, '0')}${cleanKey}`;
+  const merchantAccount = `0014BR.GOV.BCB.PIX${keyField}`;
+  const tag26 = `26${String(merchantAccount.length).padStart(2, '0')}${merchantAccount}`;
   const cleanName = merchantName.normalize('NFD').replace(/[\u0300-\u036f]/g, '').slice(0, 25);
-  const tag59 = `59${cleanName.length.toString().padStart(2, '0')}${cleanName}`;
-
-  const cleanCity = merchantCity.normalize('NFD').replace(/[\u0300-\u036f]/g, '').slice(0, 15);
-  const tag60 = `60${cleanCity.length.toString().padStart(2, '0')}${cleanCity}`;
-
-  let amountStr = '';
-  if (amount && amount > 0) {
-    const formattedAmount = amount.toFixed(2);
-    amountStr = `54${formattedAmount.length.toString().padStart(2, '0')}${formattedAmount}`;
-  }
-
-  const tag62 = `62070503***`;
-
-  const rawPayload = `000201${tag26}520400005303986${amountStr}5802BR${tag59}${tag60}${tag62}6304`;
-  const checksum = crc16(rawPayload);
-
-  return `${rawPayload}${checksum}`;
+  const tag59 = `59${String(cleanName.length).padStart(2, '0')}${cleanName}`;
+  const amountText = Number(amount).toFixed(2);
+  const tag54 = `54${String(amountText.length).padStart(2, '0')}${amountText}`;
+  const rawPayload = `000201${tag26}520400005303986${tag54}5802BR${tag59}6009SAO PAULO62070503***6304`;
+  return `${rawPayload}${crc16(rawPayload)}`;
 }
 
-export default function PixModal({ gift, pixKey, pixHolder, cardLink, onClose, onSuccess, onOpenPixConfig }) {
-  const [donorName, setDonorName] = useState('');
-  const [customValue, setCustomValue] = useState('100');
+export default function PixModal({ gift, pixKey, pixHolder, cardLink, onClose, onSuccess }) {
+  const [name, setName] = useState('');
   const [message, setMessage] = useState('');
-  const [copied, setCopied] = useState(false);
-  const [step, setStep] = useState('form'); // 'form' | 'payment' | 'success'
-  const [paymentMethod, setPaymentMethod] = useState('pix'); // 'pix' | 'card'
+  const [customValue, setCustomValue] = useState('100');
+  const [step, setStep] = useState('details');
+  const [copyState, setCopyState] = useState('idle');
+  const [cardState, setCardState] = useState('idle');
+  const [cardError, setCardError] = useState('');
+  const closeButtonRef = useRef(null);
+  const modalRef = useRef(null);
+  const stepRef = useRef(null);
+  const finalPrice = gift.isCustom ? Number(customValue) || 0 : gift.price;
+  const finalCardPrice = cardPrice(finalPrice);
+  const cardFee = Math.max(0, finalCardPrice - finalPrice);
+  const pixPayload = useMemo(
+    () => generatePixPayload({ pixKey, merchantName: pixHolder || 'Bru e Cat', amount: finalPrice }),
+    [finalPrice, pixHolder, pixKey],
+  );
 
-  // Card Form State (Direct in-site checkout)
-  const [cardNumber, setCardNumber] = useState('');
-  const [cardHolder, setCardHolder] = useState('');
-  const [cardExpiry, setCardExpiry] = useState('');
-  const [cardCvv, setCardCvv] = useState('');
-  const [installments, setInstallments] = useState('1');
-  const [isProcessingCard, setIsProcessingCard] = useState(false);
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    const trigger = document.activeElement;
+    document.body.style.overflow = 'hidden';
+    closeButtonRef.current?.focus();
 
-  // Calculate effective price
-  const finalPrice = gift?.isCustom
-    ? parseFloat(customValue) || 0
-    : gift?.price || 0;
+    const handleKeyboard = (event) => {
+      if (event.key === 'Escape') onClose();
+      if (event.key !== 'Tab') return;
 
-  // Generate 100% valid BCB EMV PIX Copia e Cola payload
-  const pixPayload = generatePixPayload({
-    pixKey: pixKey || '63.066.276/0001-92',
-    merchantName: pixHolder || 'Bru e Cat',
-    merchantCity: 'SAO PAULO',
-    amount: finalPrice
-  });
+      const focusable = modalRef.current?.querySelectorAll(
+        'button:not([disabled]), a[href], input:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      );
+      if (!focusable?.length) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    window.addEventListener('keydown', handleKeyboard);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', handleKeyboard);
+      trigger?.focus?.();
+    };
+  }, [onClose]);
 
-  // Detect card brand
-  const getCardBrand = (num) => {
-    const clean = num.replace(/\D/g, '');
-    if (clean.startsWith('4')) return 'Visa';
-    if (/^(5[1-5]|2[2-7])/.test(clean)) return 'Mastercard';
-    if (/^(34|37)/.test(clean)) return 'Amex';
-    if (/^(6011|65|64[4-9])/.test(clean)) return 'Elo';
-    return 'Cartao';
-  };
+  useEffect(() => {
+    if (step !== 'details') stepRef.current?.focus();
+  }, [step]);
 
-  // Format card number
-  const handleCardNumberChange = (e) => {
-    let value = e.target.value.replace(/\D/g, '').slice(0, 16);
-    value = value.replace(/(\d{4})/g, '$1 ').trim();
-    setCardNumber(value);
-  };
-
-  // Format expiry MM/YY
-  const handleExpiryChange = (e) => {
-    let value = e.target.value.replace(/\D/g, '').slice(0, 4);
-    if (value.length >= 3) {
-      value = `${value.slice(0, 2)}/${value.slice(2)}`;
+  const copyPix = async () => {
+    try {
+      await navigator.clipboard.writeText(pixPayload);
+      setCopyState('copied');
+      window.setTimeout(() => setCopyState('idle'), 2500);
+    } catch {
+      setCopyState('error');
     }
-    setCardExpiry(value);
   };
 
-  const handleCopyPix = () => {
-    navigator.clipboard.writeText(pixPayload);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 3000);
-  };
-
-  const handleProceedToPayment = (e) => {
-    e.preventDefault();
-    if (!donorName.trim()) {
-      alert('Por favor, informe seu nome ou apelido para o cartao de presente!');
-      return;
-    }
-    if (gift?.isCustom && finalPrice <= 0) {
-      alert('Por favor, digite um valor valido para o presente!');
-      return;
-    }
+  const proceed = (event) => {
+    event.preventDefault();
+    if (!name.trim() || finalPrice <= 0) return;
     setStep('payment');
   };
 
-  const handleConfirmPayment = () => {
-    confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: { y: 0.6 },
-      colors: ['#C86D51', '#5B6E4E', '#D4A373', '#F9F6F0']
-    });
+  const startCardCheckout = async () => {
+    if (!name.trim() || finalPrice <= 0 || cardState === 'loading') return;
+    setCardState('loading');
+    setCardError('');
 
-    const newGiftEntry = {
+    const items = gift.items
+      ? gift.items.map((item) => ({ id: item.id, quantity: item.quantity }))
+      : [{ id: gift.id, quantity: 1, ...(gift.isCustom ? { customAmount: finalPrice } : {}) }];
+
+    try {
+      const checkoutResponse = await fetch('/api/mercado-pago-checkout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ items, payerName: name.trim() }),
+      });
+      const checkout = await checkoutResponse.json();
+      if (!checkoutResponse.ok || !checkout.checkoutUrl) throw new Error(checkout.error || 'Não foi possível abrir o cartão.');
+      window.location.assign(checkout.checkoutUrl);
+    } catch (error) {
+      setCardState('error');
+      setCardError(error instanceof Error ? error.message : 'Não foi possível abrir o cartão agora.');
+    }
+  };
+
+  const saveMessage = () => {
+    onSuccess({
       id: `gift-${Date.now()}`,
-      name: donorName.trim() || 'Amigo Anonimo',
-      message: message.trim() || 'Desejo toda a felicidade do mundo para essa casa nova!',
-      amount: finalPrice,
-      giftTitle: gift?.title || 'Contribuicao Especial',
-      date: 'Agora'
-    };
-
-    onSuccess(newGiftEntry);
+      name: name.trim(),
+      message: message.trim() || 'Que essa casa seja cheia de encontros bons!',
+      giftTitle: gift.items
+        ? gift.items.map((item) => `${item.quantity > 1 ? `${item.quantity}× ` : ''}${item.title}`).join(' + ')
+        : gift.title,
+      date: 'Agora',
+    });
+    confetti({
+      particleCount: 70,
+      spread: 64,
+      origin: { y: 0.72 },
+      colors: ['#bd2738', '#f8f4f1', '#221c1b'],
+      disableForReducedMotion: true,
+    });
     setStep('success');
   };
 
-  const handleProcessCardPayment = (e) => {
-    e.preventDefault();
-    if (cardNumber.replace(/\D/g, '').length < 13) {
-      alert('Por favor, digite um numero de cartao valido!');
-      return;
-    }
-    if (!cardHolder.trim()) {
-      alert('Por favor, digite o nome impresso no cartao!');
-      return;
-    }
-    if (cardExpiry.length < 5) {
-      alert('Por favor, digite a validade (MM/AA)!');
-      return;
-    }
-    if (cardCvv.length < 3) {
-      alert('Por favor, digite o CVV (codigo de seguranca)!');
-      return;
-    }
-
-    setIsProcessingCard(true);
-
-    // Simulate instant secure processing
-    setTimeout(() => {
-      setIsProcessingCard(false);
-      handleConfirmPayment();
-    }, 1500);
-  };
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#2B2A27]/80 backdrop-blur-md animate-fadeIn overflow-y-auto">
-      <div className="bg-white rounded-3xl max-w-lg w-full overflow-hidden shadow-2xl border border-[#EFE6D5] my-6 animate-scaleUp">
-        
-        {/* Header */}
-        <div className="terracotta-gradient p-5 sm:p-6 text-white relative">
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 bg-black/20 hover:bg-black/40 text-white p-1.5 rounded-full transition-colors cursor-pointer"
-          >
-            <X size={20} />
-          </button>
-
-          <div className="flex items-center gap-2 text-white/90 text-xs font-semibold uppercase tracking-wider mb-1">
-            <Heart size={14} className="fill-white" /> Bru's House
+    <div className="modal-backdrop" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
+      <section ref={modalRef} className="pix-modal" role="dialog" aria-modal="true" aria-labelledby="pix-modal-title">
+        <header className="pix-modal-header">
+          <div>
+            <small>{gift.items ? 'Seus mimos' : 'Seu mimo'}</small>
+            <h2 id="pix-modal-title">{gift.title}</h2>
           </div>
-          <h3 className="font-serif text-xl sm:text-2xl font-bold text-white">
-            {gift?.title || 'Presentear com Amor'}
-          </h3>
-          <p className="text-xs text-white/80 mt-1">
-            Sua contribuicao vai direto para a montagem do lar da Bru & Cat.
-          </p>
-        </div>
+          <button ref={closeButtonRef} type="button" className="icon-button" onClick={onClose} aria-label="Fechar">
+            <X size={20} strokeWidth={2} />
+          </button>
+        </header>
 
-        {/* Modal Body */}
-        <div className="p-5 sm:p-6 space-y-5">
-
-          {/* STEP 1: FORM INPUTS */}
-          {step === 'form' && (
-            <form onSubmit={handleProceedToPayment} className="space-y-4">
-              
-              {/* Custom amount selection */}
-              {gift?.isCustom && (
-                <div className="space-y-2 bg-[#EFE6D5]/40 p-4 rounded-2xl border border-[#D4A373]/30">
-                  <label className="block text-xs font-bold text-[#2B2A27] uppercase tracking-wider">
-                    Digite o Valor Desejado (R$)
-                  </label>
-                  <div className="relative">
-                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 font-serif font-bold text-[#C86D51] text-lg">
-                      R$
-                    </span>
-                    <input
-                      type="number"
-                      min="1"
-                      step="any"
-                      value={customValue}
-                      onChange={(e) => setCustomValue(e.target.value)}
-                      placeholder="Ex: 100"
-                      className="w-full bg-white pl-12 pr-4 py-3 rounded-xl border-2 border-[#C86D51] font-serif font-bold text-xl text-[#2B2A27] focus:outline-none focus:ring-2 focus:ring-[#C86D51]"
-                      required
-                    />
-                  </div>
-                  <div className="flex flex-wrap gap-2 pt-1">
-                    {[50, 100, 200, 350].map((val) => (
-                      <button
-                        type="button"
-                        key={val}
-                        onClick={() => setCustomValue(val.toString())}
-                        className={`text-xs font-semibold px-3 py-1 rounded-full border transition-all cursor-pointer ${
-                          customValue === val.toString()
-                            ? 'bg-[#C86D51] text-white border-[#C86D51]'
-                            : 'bg-white text-[#2B2A27] border-[#D4A373]/50 hover:bg-[#EFE6D5]'
-                        }`}
-                      >
-                        R$ {val}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Price Tag if fixed */}
-              {!gift?.isCustom && (
-                <div className="bg-[#EFE6D5]/40 p-4 rounded-2xl flex items-center justify-between border border-[#D4A373]/30">
-                  <div>
-                    <span className="text-xs text-[#5B6E4E] font-medium block">Valor do Mimo</span>
-                    <span className="font-serif text-xl font-bold text-[#C86D51]">
-                      R$ {finalPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                    </span>
-                  </div>
-                  <span className="text-xs bg-[#5B6E4E] text-white px-3 py-1 rounded-full font-semibold">
-                    {gift?.badge || 'Mimo Especial'}
-                  </span>
-                </div>
-              )}
-
-              {/* Name Input */}
-              <div className="space-y-1">
-                <label className="block text-xs font-bold text-[#2B2A27]">
-                  Seu Nome ou Apelido *
-                </label>
-                <input
-                  type="text"
-                  placeholder="Ex: Lorena, Luiza, Malu..."
-                  value={donorName}
-                  onChange={(e) => setDonorName(e.target.value)}
-                  className="w-full bg-white px-4 py-3 rounded-xl border border-[#D4A373]/50 text-sm text-[#2B2A27] focus:outline-none focus:ring-2 focus:ring-[#C86D51]"
-                  required
-                />
+        {step === 'details' && (
+          <form className="pix-form" onSubmit={proceed}>
+            {gift.isCustom && (
+              <label className="field">
+                <span>Qual valor você quer enviar?</span>
+                <span className="money-input"><b>R$</b><input type="number" min="1" step="1" value={customValue} onChange={(event) => setCustomValue(event.target.value)} required /></span>
+              </label>
+            )}
+            {gift.items && (
+              <div className="pix-cart-summary">
+                {gift.items.map((item) => <span key={item.id}><b>{item.quantity}× {item.title}</b><small>{(item.price * item.quantity).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</small></span>)}
               </div>
-
-              {/* Message Input */}
-              <div className="space-y-1">
-                <label className="block text-xs font-bold text-[#2B2A27]">
-                  Recado Carinhoso para a Bru & Cat (Opcional)
-                </label>
-                <textarea
-                  rows="3"
-                  placeholder="Escreva uma mensagem para ficar gravada no nosso mural..."
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  className="w-full bg-white px-4 py-3 rounded-xl border border-[#D4A373]/50 text-sm text-[#2B2A27] focus:outline-none focus:ring-2 focus:ring-[#C86D51] resize-none"
-                />
-              </div>
-
-              {/* Payment Method Selection */}
-              <div className="space-y-2">
-                <label className="block text-xs font-bold text-[#2B2A27] uppercase tracking-wider">
-                  Forma de Pagamento
-                </label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod('pix')}
-                    className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all cursor-pointer ${
-                      paymentMethod === 'pix'
-                        ? 'border-[#5B6E4E] bg-[#5B6E4E]/10 shadow-sm'
-                        : 'border-[#EFE6D5] bg-white hover:border-[#D4A373]'
-                    }`}
-                  >
-                    <Landmark size={24} className={paymentMethod === 'pix' ? 'text-[#5B6E4E]' : 'text-[#2B2A27]/50'} />
-                    <span className={`text-xs font-bold ${paymentMethod === 'pix' ? 'text-[#5B6E4E]' : 'text-[#2B2A27]/70'}`}>
-                      PIX
-                    </span>
-                    <span className="text-[10px] text-[#2B2A27]/50">Transferencia instantanea</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setPaymentMethod('card')}
-                    className={`flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all cursor-pointer ${
-                      paymentMethod === 'card'
-                        ? 'border-[#C86D51] bg-[#C86D51]/10 shadow-sm'
-                        : 'border-[#EFE6D5] bg-white hover:border-[#D4A373]'
-                    }`}
-                  >
-                    <CreditCard size={24} className={paymentMethod === 'card' ? 'text-[#C86D51]' : 'text-[#2B2A27]/50'} />
-                    <span className={`text-xs font-bold ${paymentMethod === 'card' ? 'text-[#C86D51]' : 'text-[#2B2A27]/70'}`}>
-                      Cartao de Credito
-                    </span>
-                    <span className="text-[10px] text-[#2B2A27]/50">No proprio site em ate 6x</span>
-                  </button>
+            )}
+            {!gift.isCustom && <p className="pix-price">{finalPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>}
+            <label className="field">
+              <span>Seu nome</span>
+              <input type="text" value={name} onChange={(event) => setName(event.target.value)} placeholder="Como a gente te chama?" autoComplete="name" required />
+            </label>
+            <label className="field">
+              <span>Um recado, se quiser</span>
+              <textarea rows="3" value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Vale mensagem curta, piada interna e conselho de casa." />
+            </label>
+            <div className="payment-options" aria-label="Escolha como pagar">
+              <section className="payment-option">
+                <span className="payment-option-heading"><QrCode size={19} aria-hidden="true" /><b>PIX à vista</b><small>Sem taxa</small></span>
+                <strong>{finalPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</strong>
+                <button className="primary-button" type="submit">Gerar PIX</button>
+              </section>
+              <section className="payment-option">
+                <span className="payment-option-heading"><CreditCard size={19} aria-hidden="true" /><b>Cartão de crédito</b><small>Até {CARD_INSTALLMENTS}x</small></span>
+                <div className="card-breakdown">
+                  <span><small>Subtotal</small><b>{finalPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</b></span>
+                  <span><small>Acréscimo do cartão ({(CARD_FEE_RATE * 100).toLocaleString('pt-BR', { maximumFractionDigits: 2 })}%)</small><b>{cardFee.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</b></span>
                 </div>
-              </div>
-
-              {/* Submit Button */}
-              <button
-                type="submit"
-                className="w-full terracotta-gradient text-white font-bold text-base py-3.5 rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center gap-2 cursor-pointer mt-4"
-              >
-                <span>{paymentMethod === 'pix' ? 'Ir para o PIX' : 'Ir para Pagamento com Cartao'}</span>
-                <Send size={18} />
-              </button>
-            </form>
-          )}
-
-          {/* STEP 2: PAYMENT (PIX or CARD) */}
-          {step === 'payment' && (
-            <div className="space-y-5 animate-fadeIn text-center">
-
-              {/* Payment Method Tabs */}
-              <div className="flex rounded-xl overflow-hidden border border-[#EFE6D5]">
-                <button
-                  onClick={() => setPaymentMethod('pix')}
-                  className={`flex-1 py-2.5 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                    paymentMethod === 'pix'
-                      ? 'bg-[#5B6E4E] text-white'
-                      : 'bg-white text-[#2B2A27]/70 hover:bg-[#EFE6D5]'
-                  }`}
-                >
-                  <Landmark size={14} /> PIX
+                <strong>{finalCardPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })} <small>ou até {CARD_INSTALLMENTS}× de {(finalCardPrice / CARD_INSTALLMENTS).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</small></strong>
+                <button className="secondary-button" type="button" onClick={startCardCheckout} disabled={cardState === 'loading'}>
+                  {cardState === 'loading' ? <LoaderCircle className="spin" size={18} aria-hidden="true" /> : <CreditCard size={18} aria-hidden="true" />}
+                  {cardState === 'loading' ? 'Abrindo checkout…' : 'Pagar com cartão'}
                 </button>
-                <button
-                  onClick={() => setPaymentMethod('card')}
-                  className={`flex-1 py-2.5 text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
-                    paymentMethod === 'card'
-                      ? 'bg-[#C86D51] text-white'
-                      : 'bg-white text-[#2B2A27]/70 hover:bg-[#EFE6D5]'
-                  }`}
-                >
-                  <CreditCard size={14} /> Cartao de Credito
-                </button>
-              </div>
-
-              {/* Amount Display */}
-              <div className="bg-[#EFE6D5]/50 p-3.5 rounded-2xl flex items-center justify-between border border-[#D4A373]/30">
-                <span className="text-xs text-[#2B2A27]/80 font-medium">Valor Total:</span>
-                <span className="font-serif text-2xl font-extrabold text-[#C86D51]">
-                  R$ {finalPrice.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
-                </span>
-              </div>
-
-              {/* PIX PAYMENT VIEW */}
-              {paymentMethod === 'pix' && (
-                <>
-                  {/* Mobile Assistance Banner */}
-                  <div className="bg-[#5B6E4E]/10 border border-[#5B6E4E]/30 p-3.5 rounded-2xl text-left space-y-1">
-                    <div className="flex items-center gap-2 text-xs font-bold text-[#5B6E4E] uppercase tracking-wider">
-                      <Smartphone size={16} /> Acessando pelo celular?
-                    </div>
-                    <p className="text-xs text-[#2B2A27]/85 leading-relaxed">
-                      1. Clique no botao verde abaixo para <strong>copiar o codigo PIX Copia e Cola</strong>.<br />
-                      2. Abra o app do seu banco, va em <strong>Pix &rarr; Pix Copia e Cola</strong> e cole!
-                    </p>
-                  </div>
-
-                  {/* PROMINENT PIX COPIA E COLA BUTTON */}
-                  <div className="space-y-2">
-                    <button
-                      onClick={handleCopyPix}
-                      className={`w-full py-4 px-5 rounded-2xl font-extrabold text-sm sm:text-base transition-all flex items-center justify-center gap-2.5 cursor-pointer shadow-lg transform active:scale-95 ${
-                        copied
-                          ? 'bg-green-600 text-white scale-102'
-                          : 'bg-[#5B6E4E] hover:bg-[#445439] text-white'
-                      }`}
-                    >
-                      {copied ? (
-                        <>
-                          <Check size={22} />
-                          <span>CODIGO PIX COPIADO! AGORA ABRA O SEU BANCO</span>
-                        </>
-                      ) : (
-                        <>
-                          <Copy size={22} />
-                          <span>COPIAR CODIGO PIX (COPIA E COLA)</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-
-                  {/* Editable/Visible PIX Text Box */}
-                  <div className="space-y-1 text-left">
-                    <label className="block text-[11px] font-bold text-[#2B2A27]/70 uppercase">
-                      Codigo Pix Copia e Cola (ou selecione manualmente):
-                    </label>
-                    <div className="relative">
-                      <textarea
-                        readOnly
-                        rows="2"
-                        value={pixPayload}
-                        onClick={handleCopyPix}
-                        className="w-full bg-[#F9F6F0] p-2.5 rounded-xl border border-[#D4A373]/40 text-[11px] font-mono text-[#2B2A27] resize-none focus:outline-none cursor-pointer select-all"
-                      />
-                    </div>
-                  </div>
-
-                  {/* QR Code Collapsible */}
-                  <div className="pt-3 border-t border-[#EFE6D5] space-y-2">
-                    <details className="text-left group" open>
-                      <summary className="text-xs font-semibold text-[#C86D51] hover:underline cursor-pointer flex items-center gap-1">
-                        <Info size={14} /> QR Code do Banco Inter Business
-                      </summary>
-                      <div className="bg-[#F9F6F0] p-4 rounded-2xl border border-[#D4A373]/30 mt-3 flex flex-col items-center space-y-2">
-                        <QRCodeSVG
-                          value={pixPayload}
-                          size={160}
-                          level="H"
-                          includeMargin={true}
-                          className="rounded-lg bg-white p-2 shadow-xs"
-                        />
-                        <span className="text-[10px] text-[#2B2A27]/70">Escaneie com a camera do seu banco</span>
-                      </div>
-                    </details>
-                  </div>
-
-                  {/* Confirm Done Buttons */}
-                  <div className="pt-3 flex items-center justify-between gap-3">
-                    <button
-                      onClick={() => setStep('form')}
-                      className="text-xs text-[#2B2A27]/70 hover:text-[#2B2A27] font-medium py-2 cursor-pointer"
-                    >
-                      &larr; Alterar Valor
-                    </button>
-
-                    <button
-                      onClick={handleConfirmPayment}
-                      className="terracotta-gradient text-white text-xs font-bold px-5 py-3 rounded-xl shadow-md flex items-center gap-1.5 cursor-pointer"
-                    >
-                      <ShieldCheck size={16} />
-                      <span>Ja Fiz o Pix / Confirmar Mimo</span>
-                    </button>
-                  </div>
-                </>
-              )}
-
-              {/* CARD PAYMENT VIEW (Direct In-Site Checkout Form) */}
-              {paymentMethod === 'card' && (
-                <form onSubmit={handleProcessCardPayment} className="space-y-4 text-left">
-                  
-                  {/* Card Number */}
-                  <div className="space-y-1">
-                    <div className="flex items-center justify-between">
-                      <label className="block text-xs font-bold text-[#2B2A27]">
-                        Numero do Cartao *
-                      </label>
-                      <span className="text-[11px] font-bold text-[#C86D51]">
-                        {getCardBrand(cardNumber)}
-                      </span>
-                    </div>
-                    <div className="relative">
-                      <CreditCard size={18} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#2B2A27]/50" />
-                      <input
-                        type="text"
-                        value={cardNumber}
-                        onChange={handleCardNumberChange}
-                        placeholder="0000 0000 0000 0000"
-                        maxLength="19"
-                        className="w-full bg-[#F9F6F0] pl-10 pr-4 py-3 rounded-xl border border-[#D4A373]/50 font-mono text-sm text-[#2B2A27] focus:outline-none focus:ring-2 focus:ring-[#C86D51]"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  {/* Cardholder Name */}
-                  <div className="space-y-1">
-                    <label className="block text-xs font-bold text-[#2B2A27]">
-                      Nome Impresso no Cartao *
-                    </label>
-                    <input
-                      type="text"
-                      value={cardHolder}
-                      onChange={(e) => setCardHolder(e.target.value.toUpperCase())}
-                      placeholder="EX: ANA M SILVA"
-                      className="w-full bg-[#F9F6F0] px-4 py-3 rounded-xl border border-[#D4A373]/50 text-sm font-mono text-[#2B2A27] focus:outline-none focus:ring-2 focus:ring-[#C86D51]"
-                      required
-                    />
-                  </div>
-
-                  {/* Expiry & CVV */}
-                  <div className="grid grid-cols-2 gap-3">
-                    <div className="space-y-1">
-                      <label className="block text-xs font-bold text-[#2B2A27]">
-                        Validade (MM/AA) *
-                      </label>
-                      <input
-                        type="text"
-                        value={cardExpiry}
-                        onChange={handleExpiryChange}
-                        placeholder="MM/AA"
-                        maxLength="5"
-                        className="w-full bg-[#F9F6F0] px-4 py-3 rounded-xl border border-[#D4A373]/50 font-mono text-sm text-[#2B2A27] focus:outline-none focus:ring-2 focus:ring-[#C86D51] text-center"
-                        required
-                      />
-                    </div>
-
-                    <div className="space-y-1">
-                      <label className="block text-xs font-bold text-[#2B2A27]">
-                        CVV *
-                      </label>
-                      <input
-                        type="password"
-                        value={cardCvv}
-                        onChange={(e) => setCardCvv(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                        placeholder="123"
-                        maxLength="4"
-                        className="w-full bg-[#F9F6F0] px-4 py-3 rounded-xl border border-[#D4A373]/50 font-mono text-sm text-[#2B2A27] focus:outline-none focus:ring-2 focus:ring-[#C86D51] text-center"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  {/* Installments Option */}
-                  <div className="space-y-1">
-                    <label className="block text-xs font-bold text-[#2B2A27]">
-                      Opcoes de Parcelamento
-                    </label>
-                    <select
-                      value={installments}
-                      onChange={(e) => setInstallments(e.target.value)}
-                      className="w-full bg-[#F9F6F0] px-4 py-3 rounded-xl border border-[#D4A373]/50 text-xs font-semibold text-[#2B2A27] focus:outline-none focus:ring-2 focus:ring-[#C86D51]"
-                    >
-                      <option value="1">1x de R$ {finalPrice.toFixed(2)} (A vista sem juros)</option>
-                      {finalPrice >= 60 && (
-                        <option value="2">2x de R$ {(finalPrice / 2).toFixed(2)} sem juros</option>
-                      )}
-                      {finalPrice >= 90 && (
-                        <option value="3">3x de R$ {(finalPrice / 3).toFixed(2)} sem juros</option>
-                      )}
-                      {finalPrice >= 180 && (
-                        <option value="6">6x de R$ {(finalPrice / 6).toFixed(2)} sem juros</option>
-                      )}
-                    </select>
-                  </div>
-
-                  {/* Security Assurance */}
-                  <div className="flex items-center gap-2 bg-[#5B6E4E]/10 p-3 rounded-xl text-[11px] text-[#5B6E4E] font-medium">
-                    <Lock size={14} className="flex-shrink-0" />
-                    <span>Pagamento 100% criptografado e seguro diretamente no site.</span>
-                  </div>
-
-                  {/* Submit Button */}
-                  <div className="pt-2 flex items-center justify-between gap-3">
-                    <button
-                      type="button"
-                      onClick={() => setStep('form')}
-                      className="text-xs text-[#2B2A27]/70 hover:text-[#2B2A27] font-medium py-2 cursor-pointer"
-                    >
-                      &larr; Voltar
-                    </button>
-
-                    <button
-                      type="submit"
-                      disabled={isProcessingCard}
-                      className="w-full sm:w-auto terracotta-gradient text-white text-xs font-bold px-6 py-3.5 rounded-xl shadow-md flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-                    >
-                      {isProcessingCard ? (
-                        <>
-                          <Loader2 size={16} className="animate-spin" />
-                          <span>Processando Cartao...</span>
-                        </>
-                      ) : (
-                        <>
-                          <ShieldCheck size={16} />
-                          <span>Pagar R$ {finalPrice.toFixed(2)} no Cartao</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
-
-                </form>
-              )}
-
+              </section>
             </div>
-          )}
+            {cardError && <p className="inline-error" role="alert">{cardError}</p>}
+          </form>
+        )}
 
-          {/* STEP 3: SUCCESS CELEBRATION */}
-          {step === 'success' && (
-            <div className="text-center py-6 space-y-4 animate-scaleUp">
-              <div className="w-16 h-16 rounded-full terracotta-gradient text-white flex items-center justify-center mx-auto shadow-xl">
-                <CheckCircle2 size={36} className="text-white animate-bounce" />
-              </div>
-
-              <div className="space-y-1">
-                <h4 className="font-serif text-2xl font-extrabold text-[#2B2A27]">
-                  Muito obrigado, {donorName}!
-                </h4>
-                <p className="text-xs sm:text-sm text-[#2B2A27]/80 leading-relaxed max-w-xs mx-auto">
-                  Seu mimo de <strong>R$ {finalPrice.toFixed(2)}</strong> foi confirmado com sucesso para a Bru & Cat!
-                </p>
-              </div>
-
-              <div className="bg-[#EFE6D5]/50 p-4 rounded-2xl text-left border border-[#D4A373]/30">
-                <span className="text-[10px] font-bold text-[#5B6E4E] uppercase tracking-wider block mb-1">
-                  Seu Recado Gravado no Mural
-                </span>
-                <p className="text-xs italic text-[#2B2A27]">
-                  "{message || 'Desejo toda a felicidade do mundo para essa casa nova!'}"
-                </p>
-              </div>
-
-              <button
-                onClick={onClose}
-                className="w-full terracotta-gradient text-white text-xs font-bold py-3.5 rounded-xl shadow-md cursor-pointer uppercase tracking-wider"
-              >
-                Concluir & Ver Mural de Recados
-              </button>
+        {step === 'payment' && (
+          <div ref={stepRef} className="pix-payment" tabIndex="-1" aria-label="Pagamento por PIX">
+            <div className="pix-qr"><QRCodeSVG value={pixPayload} size={176} level="H" includeMargin /></div>
+            <p className="pix-payment-value">{finalPrice.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })}</p>
+            <p>Escaneie o QR Code ou copie o código para o app do seu banco.</p>
+            <p className="pix-recipient">Confira o favorecido no banco: <strong>{pixHolder}</strong> · CNPJ final {pixKey.replace(/\D/g, '').slice(-6)}</p>
+            <button className="primary-button" type="button" onClick={copyPix}>
+              {copyState === 'copied' ? <Check size={18} /> : <Copy size={18} />}
+              {copyState === 'copied' ? 'Código copiado' : 'Copiar código PIX'}
+            </button>
+            <span className="sr-only" role="status" aria-live="polite">
+              {copyState === 'copied' ? 'Código PIX copiado.' : copyState === 'error' ? 'Não foi possível copiar o código PIX.' : ''}
+            </span>
+            {copyState === 'error' && <p className="inline-error">Não foi possível copiar. Selecione o código abaixo.</p>}
+            <textarea className="pix-code" readOnly value={pixPayload} aria-label="Código PIX copia e cola" />
+            {cardLink && (
+              <a className="secondary-button" href={cardLink} target="_blank" rel="noreferrer">
+                Pagar por cartão em checkout seguro <ExternalLink size={16} />
+              </a>
+            )}
+            <div className="pix-confirmation">
+              <p>O site não confere o pagamento automaticamente. Depois de transferir, salve seu recado neste aparelho.</p>
+              <button type="button" className="secondary-button" onClick={saveMessage}>Já fiz o PIX</button>
             </div>
-          )}
+            <button type="button" className="text-button" onClick={() => setStep('details')}>Voltar</button>
+          </div>
+        )}
 
-        </div>
-
-      </div>
+        {step === 'success' && (
+          <div ref={stepRef} className="pix-success" tabIndex="-1" aria-live="polite">
+            <span><Check size={30} /></span>
+            <h3>Recado guardado.</h3>
+            <p>Obrigada, {name}. Ele já aparece nesta página no seu aparelho.</p>
+            <button className="primary-button" type="button" onClick={onClose}>Ver os recados</button>
+          </div>
+        )}
+      </section>
     </div>
   );
 }

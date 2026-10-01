@@ -1,143 +1,106 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import Navbar from './components/Navbar';
 import Hero from './components/Hero';
-import Timeline from './components/Timeline';
 import GiftList from './components/GiftList';
 import MessagesWall from './components/MessagesWall';
 import Footer from './components/Footer';
 import PixModal from './components/PixModal';
-import PixConfigModal from './components/PixConfigModal';
-import { INITIAL_MESSAGES, GIFTS_DATA } from './data/gifts';
+import CartDrawer from './components/CartDrawer';
+import { GIFTS_DATA, INITIAL_MESSAGES } from './data/gifts';
 
-const DEFAULT_PIX_CONFIG = {
+const PIX_CONFIG = {
   key: '63.066.276/0001-92',
   holder: 'Bru & Cat',
-  cardLink: ''
+  cardLink: '',
 };
 
 export default function App() {
-  // Payment Config State with localStorage (v3 key to force update to real Inter Business CNPJ key)
-  const [pixConfig, setPixConfig] = useState(() => {
-    const saved = localStorage.getItem('cha_casa_nova_pix_v3');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (parsed.key && parsed.key !== 'casanova.brunaepedro@gmail.com') {
-          return parsed;
-        }
-      } catch (e) {
-        // fallback
-      }
-    }
-    return DEFAULT_PIX_CONFIG;
-  });
-
-  // Messages State with localStorage
   const [messages, setMessages] = useState(() => {
-    const saved = localStorage.getItem('cha_casa_nova_messages_v3');
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved);
-        if (parsed.some(m => m.name === 'Ana & Marcelo' || m.name === 'Tia Clarice')) {
-          return INITIAL_MESSAGES;
-        }
-        return parsed;
-      } catch (e) {
-        // fallback
-      }
+    const saved = localStorage.getItem('cha_casa_nova_messages_v5');
+    if (!saved) return INITIAL_MESSAGES;
+
+    try {
+      return JSON.parse(saved);
+    } catch {
+      return INITIAL_MESSAGES;
     }
-    return INITIAL_MESSAGES;
+  });
+  const [selectedGift, setSelectedGift] = useState(null);
+  const [isCartOpen, setIsCartOpen] = useState(false);
+  const [cart, setCart] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem('cha_casa_nova_cart_v1')) || [];
+    } catch {
+      return [];
+    }
   });
 
-  // Modals state
-  const [selectedGift, setSelectedGift] = useState(null);
-  const [isPixModalOpen, setIsPixModalOpen] = useState(false);
-  const [isPixConfigOpen, setIsPixConfigOpen] = useState(false);
-
-  // Save changes to localStorage
   useEffect(() => {
-    localStorage.setItem('cha_casa_nova_pix_v3', JSON.stringify(pixConfig));
-  }, [pixConfig]);
-
-  useEffect(() => {
-    localStorage.setItem('cha_casa_nova_messages_v3', JSON.stringify(messages));
+    localStorage.setItem('cha_casa_nova_messages_v5', JSON.stringify(messages));
   }, [messages]);
 
-  const handleOpenGiftModal = (giftItem) => {
-    setSelectedGift(giftItem);
-    setIsPixModalOpen(true);
+  useEffect(() => {
+    localStorage.setItem('cha_casa_nova_cart_v1', JSON.stringify(cart));
+  }, [cart]);
+
+  const cartItems = cart.map((entry) => {
+    const gift = GIFTS_DATA.find((item) => item.id === entry.id);
+    return gift ? { ...gift, quantity: entry.quantity } : null;
+  }).filter(Boolean);
+  const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const cartQuantities = Object.fromEntries(cart.map((item) => [item.id, item.quantity]));
+
+  const addToCart = (gift) => setCart((current) => {
+    const existing = current.find((item) => item.id === gift.id);
+    return existing
+      ? current.map((item) => item.id === gift.id ? { ...item, quantity: item.quantity + 1 } : item)
+      : [...current, { id: gift.id, quantity: 1 }];
+  });
+
+  const decreaseCartItem = (id) => setCart((current) => current
+    .map((item) => item.id === id ? { ...item, quantity: item.quantity - 1 } : item)
+    .filter((item) => item.quantity > 0));
+
+  const checkoutCart = () => {
+    const total = cartItems.reduce((sum, item) => sum + item.price * item.quantity, 0);
+    if (!total) return;
+    setIsCartOpen(false);
+    setSelectedGift({ id: 'cart', title: 'Seu carrinho', price: total, items: cartItems, isCart: true });
   };
 
-  const handleOpenCustomGift = () => {
-    const customGiftObj = GIFTS_DATA.find((g) => g.isCustom) || {
-      id: 'custom-amount',
-      title: 'Mandar o Valor que Quiser',
-      isCustom: true,
-      price: null,
-      badge: 'Valor Livre'
-    };
-    setSelectedGift(customGiftObj);
-    setIsPixModalOpen(true);
-  };
-
-  const handleGiftSuccess = (newEntry) => {
-    setMessages((prev) => [newEntry, ...prev]);
-  };
-
-  const handleSavePixConfig = (newConfig) => {
-    setPixConfig(newConfig);
+  const saveSuccess = (entry) => {
+    setMessages((current) => [entry, ...current]);
+    if (selectedGift?.isCart) setCart([]);
   };
 
   return (
-    <div className="min-h-screen bg-[#F9F6F0] text-[#2B2A27] font-sans flex flex-col selection:bg-[#C86D51] selection:text-white">
-      {/* Top Navbar */}
-      <Navbar onOpenCustomGift={handleOpenCustomGift} />
-
-      {/* Main Content (Centered & Mobile-First) */}
-      <main className="flex-grow">
-        {/* Hero Section */}
-        <Hero onOpenCustomGift={handleOpenCustomGift} />
-
-        {/* Story & Timeline */}
-        <Timeline />
-
-        {/* Gift Registry Grid */}
-        <GiftList onSelectGift={handleOpenGiftModal} />
-
-        {/* Messages & Love Wall (Bru & Cat focus) */}
+    <div className="site-shell">
+      <Navbar cartCount={cartCount} onOpenCart={() => setIsCartOpen(true)} />
+      <main>
+        <Hero />
+        <GiftList onSelectGift={setSelectedGift} onAddToCart={addToCart} cartQuantities={cartQuantities} />
         <MessagesWall messages={messages} />
       </main>
+      <Footer />
 
-      {/* Footer */}
-      <Footer
-        onOpenPixConfig={() => setIsPixConfigOpen(true)}
-        pixKey={pixConfig.key}
-      />
-
-      {/* PIX Payment Modal */}
-      {isPixModalOpen && selectedGift && (
+      {selectedGift && (
         <PixModal
           gift={selectedGift}
-          pixKey={pixConfig.key}
-          pixHolder={pixConfig.holder}
-          cardLink={pixConfig.cardLink}
-          onClose={() => {
-            setIsPixModalOpen(false);
-            setSelectedGift(null);
-          }}
-          onSuccess={handleGiftSuccess}
-          onOpenPixConfig={() => setIsPixConfigOpen(true)}
+          pixKey={PIX_CONFIG.key}
+          pixHolder={PIX_CONFIG.holder}
+          cardLink={PIX_CONFIG.cardLink}
+          onClose={() => setSelectedGift(null)}
+          onSuccess={saveSuccess}
         />
       )}
-
-      {/* Settings Admin Modal */}
-      {isPixConfigOpen && (
-        <PixConfigModal
-          currentKey={pixConfig.key}
-          currentHolder={pixConfig.holder}
-          currentCardLink={pixConfig.cardLink}
-          onClose={() => setIsPixConfigOpen(false)}
-          onSave={handleSavePixConfig}
+      {isCartOpen && (
+        <CartDrawer
+          items={cartItems}
+          onClose={() => setIsCartOpen(false)}
+          onDecrease={decreaseCartItem}
+          onIncrease={(id) => setCart((current) => current.map((item) => item.id === id ? { ...item, quantity: item.quantity + 1 } : item))}
+          onRemove={(id) => setCart((current) => current.filter((item) => item.id !== id))}
+          onCheckout={checkoutCart}
         />
       )}
     </div>

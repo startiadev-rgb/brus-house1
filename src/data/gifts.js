@@ -1,178 +1,163 @@
 export const CATEGORIES = [
-  { id: 'todos', label: 'Todos os Mimos' },
-  { id: 'mesas-utensilios', label: 'Mesa & Utensílios' },
-  { id: 'decoracao', label: 'Decoração & Conforto' },
-  { id: 'cotas', label: 'Cotas para o Lar (Máx R$ 400)' },
-  { id: 'custom', label: 'Valor Livre' },
+  { id: 'todos', label: 'Todos' },
+  { id: 'essenciais', label: 'Essenciais' },
+  { id: 'casa', label: 'Para a casa' },
+  { id: 'receber', label: 'Para receber' },
+  { id: 'cotas', label: 'Cotas' },
 ];
 
+const newGift = (id, title, category, price, description) => ({
+  id,
+  title,
+  category,
+  price,
+  description,
+  image: `/images/gifts/${id}.webp`,
+  isNew: true,
+});
+
 export const GIFTS_DATA = [
-  // Valor Livre
   {
     id: 'custom-amount',
-    title: 'Mandar o Valor que Quiser',
-    category: 'custom',
+    title: 'Um mimo do seu jeito',
+    category: 'cotas',
     price: null,
     isCustom: true,
-    image: 'https://images.unsplash.com/photo-1513151233558-d860c5398176?auto=format&fit=crop&w=600&q=80',
-    description: 'Um presente com o valor do seu coração para abençoar a Bru\'s House! Toda ajuda é recebida com um abraço bem apertado.',
-    badge: 'Mais Escolhido',
-    room: 'Qualquer Valor',
-    popular: true
+    image: '/images/gifts/custom-amount.webp',
+    description: 'Você escolhe o valor. A gente escolhe onde ele vira casa.',
   },
-
-  // Mesa & Utensílios
+  newGift('kit-iluminacao', 'Kit iluminação', 'essenciais', 230, 'Luz por dentro, por fora e no cantinho bonito.', '/images/sala2.jpg'),
+  newGift('cota-cama', 'Cota para a cama', 'cotas', 195, 'Uma força para noites boas e domingos melhores.', '/images/mimo_almofadas.jpg'),
+  newGift('geladeira-fogao', 'Geladeira + fogão', 'cotas', 200, 'Uma cota dupla para a cozinha começar com tudo.', '/images/cozinha.jpg'),
+  newGift('kit-organizacao', 'Kit organização', 'essenciais', 200, 'Caixas, arara e colmeias para cada coisa achar seu canto.', '/images/mimo_potes_ambar.jpg'),
+  newGift('kit-roupas-limpas', 'Kit roupas limpas', 'essenciais', 250, 'Uma força para roupa cheirosa e cesto vazio.', '/images/gifts/kit-roupas-limpas.webp'),
+  newGift('kit-boas-vindas', 'Kit boas-vindas', 'receber', 150, 'Louças e acessórios para receber sem improviso.', '/images/mimo_talheres.jpg'),
+  newGift('kit-paisagismo', 'Kit paisagismo', 'casa', 150, 'Plantas, vasos, terra e mãos oficialmente sujas.', '/images/banheiro.jpg'),
+  newGift('kit-open-house', 'Kit open house', 'receber', 140, 'Aquela força para a festa e a limpeza do dia seguinte.', '/images/sala1.jpg'),
+  newGift('kit-churrasco-verao', 'Kit churrasco & verão', 'receber', 90, 'Acessórios para inaugurar a área de lazer direito.', '/images/sala2.jpg'),
+  newGift('sofa', 'Cota para o sofá', 'cotas', 140, 'Para todo mundo caber, inclusive quem jurou que ia embora cedo.', '/images/mimo_almofadas.jpg'),
+  newGift('mesa-centro', 'Mesa de centro', 'casa', 80, 'Apoio oficial do café, do controle e da conversa.', '/images/sala2.jpg'),
+  newGift('panelas', 'Kit de panelas', 'essenciais', 80, 'Para começar a cozinhar antes de pedir delivery.', '/images/cozinha.jpg'),
+  newGift('ajuda-carreto', 'Ajuda com o carreto', 'cotas', 120, 'Porque os móveis ainda não aprenderam a andar sozinhos.', '/images/sala1.jpg'),
+  newGift('kit-ferramentas', 'Kit ferramentas', 'essenciais', 150, 'Para montar, apertar e fingir que o manual estava claro.', '/images/sala1_board.jpg'),
   {
     id: 'pipoqueira-eletrica',
-    title: 'Pipoqueira Elétrica Prática',
-    category: 'mesas-utensilios',
+    title: 'Pipoqueira elétrica',
+    category: 'receber',
     price: 70,
-    image: 'https://images.unsplash.com/photo-1578849278619-e73505e9610f?auto=format&fit=crop&w=600&q=80',
-    description: 'Pipoca quentinha e crocante para as noitadas de filme e séries no sofá da Bru & Cat!',
-    badge: 'Noite de Filme',
-    room: 'Cozinha',
-    popular: true
+    image: 'https://images.unsplash.com/photo-1578849278619-e73505e9610f?auto=format&fit=crop&w=800&q=82',
+    description: 'Filme bom pede pipoca sem complicação.',
   },
   {
     id: 'kit-talheres',
-    title: 'Kit de Garfos e Facas em Inox',
-    category: 'mesas-utensilios',
+    title: 'Kit de talheres',
+    category: 'essenciais',
     price: 140,
     image: '/images/mimo_talheres.jpg',
-    description: 'Jogo completo de talheres de inox elegantes para nossas jantinhas e momentos especiais na mesa.',
-    badge: 'Essencial',
-    room: 'Cozinha'
+    description: 'Para a mesa ficar pronta até nos dias comuns.',
   },
   {
     id: 'kit-copos',
-    title: 'Kit de Copos de Vidro Design',
-    category: 'mesas-utensilios',
+    title: 'Kit de copos',
+    category: 'receber',
     price: 95,
     image: '/images/mimo_copos.jpg',
-    description: 'Copos lindos e resistentes para servir sucos, água e bons drinques pros amigos que vierem visitar.',
-    badge: 'Mimo Fofo',
-    room: 'Cozinha'
+    description: 'Água, suco ou bons drinques. Sem julgamento.',
   },
   {
     id: 'potes-ambar',
-    title: 'Kit Potes & Frascos de Âmbar',
-    category: 'mesas-utensilios',
+    title: 'Potes de âmbar',
+    category: 'essenciais',
     price: 85,
     image: '/images/mimo_potes_ambar.jpg',
-    description: 'Organização fofa de vidro âmbar para as prateleiras abertas da cozinha.',
-    badge: 'Cozinha Fofa',
-    room: 'Cozinha'
+    description: 'Despensa bonita e, com sorte, organizada.',
   },
-
-  // Decoração & Conforto
   {
     id: 'kit-almofadas',
-    title: 'Kit Almofadas Terracota & Verde',
-    category: 'decoracao',
+    title: 'Kit de almofadas',
+    category: 'casa',
     price: 130,
     image: '/images/mimo_almofadas.jpg',
-    description: 'Almofadas macias nos tons terrosos da casa para deixar o sofá ultra aconchegante.',
-    badge: 'Aconchego',
-    room: 'Sala'
+    description: 'A parte macia do plano para a sala.',
   },
   {
     id: 'plantas-vasos',
-    title: 'Vasos com Plantinhas & Folhagens',
-    category: 'decoracao',
+    title: 'Vasos & folhagens',
+    category: 'casa',
     price: 110,
-    image: 'https://images.unsplash.com/photo-1485955900006-10f4d324d411?auto=format&fit=crop&w=600&q=80',
-    description: 'Verde para trazer vida, ar puro e calmaria para o banheiro e prateleiras da sala.',
-    badge: 'Vida no Lar',
-    room: 'Banheiro / Sala'
+    image: 'https://images.unsplash.com/photo-1485955900006-10f4d324d411?auto=format&fit=crop&w=800&q=82',
+    description: 'Verde para todos os cantos possíveis.',
   },
   {
     id: 'luminaria-luz-quente',
-    title: 'Luminária / Abajur de Luz Quente',
-    category: 'decoracao',
+    title: 'Luminária de luz quente',
+    category: 'casa',
     price: 160,
-    image: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=600&q=80',
-    description: 'Aquela iluminação amarelinha e acolhedora para relaxar no fim da tarde.',
-    badge: 'Clima Gostoso',
-    room: 'Sala'
+    image: 'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?auto=format&fit=crop&w=800&q=82',
+    description: 'A luz certa para desacelerar no fim do dia.',
   },
-
-  // Cotas (Máximo R$ 400 por item)
   {
-    id: 'cota-sofa',
-    title: 'Cota do Sofá de Linho (Parte 1/3)',
+    id: 'cota-sofa-linho',
+    title: 'Cota do sofá de linho',
     category: 'cotas',
     price: 400,
-    image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=600&q=80',
-    description: 'Ajuda para garantir o sofá macio onde a Bru e a Cat vão maratonar séries.',
-    badge: 'Cota Conforto',
-    room: 'Sala',
-    popular: true
+    image: 'https://images.unsplash.com/photo-1555041469-a586c61ea9bc?auto=format&fit=crop&w=800&q=82',
+    description: 'Mais uma força para o sofá sair do projeto.',
   },
   {
     id: 'cota-freezer-eletro',
-    title: 'Cota do Freezer / Eletros (Parte 1/3)',
+    title: 'Cota de freezer & eletros',
     category: 'cotas',
     price: 350,
-    image: 'https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?auto=format&fit=crop&w=600&q=80',
-    description: 'Sua parcela de carinho para guardar as marmitas e comidinhas gostosas da semana.',
-    badge: 'Cota Eletro',
-    room: 'Cozinha'
+    image: 'https://images.unsplash.com/photo-1584269600464-37b1b58a9fe7?auto=format&fit=crop&w=800&q=82',
+    description: 'Para guardar comida e planos para a semana.',
   },
   {
     id: 'cota-rack-vermelho',
-    title: 'Cota do Rack Vermelho Destaque',
+    title: 'Cota do rack',
     category: 'cotas',
     price: 290,
-    image: 'https://images.unsplash.com/photo-1595428774223-ef52624120d2?auto=format&fit=crop&w=600&q=80',
-    description: 'Ajuda no móvel principal e mais charmoso do nosso projeto de sala.',
-    badge: 'Cota Design',
-    room: 'Sala'
+    image: 'https://images.unsplash.com/photo-1595428774223-ef52624120d2?auto=format&fit=crop&w=800&q=82',
+    description: 'O móvel que vai organizar a sala toda.',
   },
   {
     id: 'cota-aluguel',
-    title: 'Uma Forcinha no Aluguel',
+    title: 'Forcinha no aluguel',
     category: 'cotas',
     price: 300,
-    image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=600&q=80',
-    description: 'Aquele alívio no aluguel para dar o start na casa nova com paz no coração!',
-    badge: 'Super Ajuda',
-    room: 'Aluguel'
+    image: 'https://images.unsplash.com/photo-1560518883-ce09059eeffa?auto=format&fit=crop&w=800&q=82',
+    description: 'Um respiro para começar a casa com calma.',
   },
   {
     id: 'pizza-mudanca',
-    title: 'Pizza da Mudança & Refri',
-    category: 'cotas',
+    title: 'Pizza da mudança',
+    category: 'receber',
     price: 90,
-    image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=600&q=80',
-    description: 'Mimo delicioso para matar a fome da Bru e da Cat enquanto abrem as caixas.',
-    badge: 'Pizza Time',
-    room: 'Mimo'
-  }
+    image: 'https://images.unsplash.com/photo-1513104890138-7c749659a591?auto=format&fit=crop&w=800&q=82',
+    description: 'Combustível oficial para abrir caixas.',
+  },
 ];
 
 export const INITIAL_MESSAGES = [
   {
     id: 'msg-lorena',
     name: 'Lorena Rosa',
-    message: 'Bru e Cat, que sonho ver essa casa tomando forma! Vocês merecem o lar mais lindo e abençoado do mundo. Já quero nosso café da tarde aí!',
-    amount: 140,
-    giftTitle: 'Kit de Garfos e Facas em Inox',
-    date: 'Hoje'
+    message: 'Que delícia ver essa casa tomando forma. Já quero nosso café da tarde aí!',
+    giftTitle: 'Kit de talheres',
+    date: 'Recado inicial',
   },
   {
     id: 'msg-luiza',
     name: 'Luiza Revite',
-    message: 'Amigas! Tenho certeza que a Bru\'s House vai ser o ponto de encontro de momentos inesquecíveis. Um beijo enorme pra Bru e pra Cat!',
-    amount: 95,
-    giftTitle: 'Kit de Copos de Vidro Design',
-    date: 'Ontem'
+    message: 'A Bru\'s House vai ser cenário de muita coisa boa. Um beijo enorme!',
+    giftTitle: 'Kit de copos',
+    date: 'Recado inicial',
   },
   {
     id: 'msg-malu',
-    name: 'Malu Magalhaes',
-    message: 'Bru e Cat <3! Um mimo com todo o meu amor para enfeitar a casa nova de vocês. Estou tão orgulhosa dessa conquista!',
-    amount: 300,
-    giftTitle: 'Uma Forcinha no Aluguel',
-    date: 'Há 2 dias'
-  }
+    name: 'Malu Magalhães',
+    message: 'Um mimo com todo meu amor para esse novo começo. Estou muito feliz por vocês!',
+    giftTitle: 'Forcinha no aluguel',
+    date: 'Recado inicial',
+  },
 ];
