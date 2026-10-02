@@ -111,13 +111,13 @@ O container principal mede `min(1180px, calc(100% - 32px))`; abaixo de 680px, us
 - **Acima de 900px:** navegação completa; grade de mimos com quatro colunas.
 - **Até 900px:** navegação textual some; grade de mimos passa a três colunas.
 - **Até 680px:** experiência principal. Grade de mimos com duas colunas e gap de 9px; recados viram trilho horizontal com scroll snap; modal vira bottom sheet; filtros permanecem roláveis.
-- **Hero:** usa `clamp(620px, 82dvh, 760px)` no desktop e `clamp(580px, 78dvh, 680px)` no mobile. A foto fica em card 16:9, sem ampliação full-bleed.
+- **Hero:** no mobile, o mosaico usa duas colunas assimétricas e três linhas; no desktop, quatro colunas iguais. A altura é fluida e limitada para manter as imagens nítidas.
 
 Alvos interativos devem ter ao menos 44px. Não acrescente uma quarta seção de conteúdo nem transforme o mobile em uma versão comprimida do desktop.
 
 ## Elevation & Depth
 
-Profundidade é suave e neutra. Cards de produto usam sombra ambiente de baixa opacidade sem borda. O hero é a única exceção: sua moldura liquid-glass usa borda interna, blur e sombra para preservar a fotografia de baixa resolução. O modal é o plano mais elevado, com backdrop escuro e blur.
+Profundidade é suave e neutra. Cards de produto usam sombra ambiente de baixa opacidade sem borda. No hero, o recorte, o degradê inferior e a escala das fotografias criam profundidade sem moldura ou blur. O modal é o plano mais elevado, com backdrop escuro e blur.
 
 ## Shapes
 
@@ -125,9 +125,9 @@ Cards e fotografias usam cantos discretos (7–8px). Campos e botões do fluxo P
 
 ## Components
 
-### Hero e seletor de ambientes
+### Hero e mosaico de ambientes
 
-Cada fotografia aparece em um card 16:9 com moldura liquid-glass sobre uma versão muito suave e desfocada da própria cena. Isso evita esticar os arquivos de 1024px por toda a tela. A troca de ambiente faz crossfade de 500ms e leve redução de escala em 900ms; o item ativo é indicado por texto e filete preto. Em `prefers-reduced-motion`, transições são praticamente removidas.
+O título e a frase curta aparecem centralizados antes das fotografias. No mobile, a Sala ocupa o card vertical principal e os outros três cômodos formam uma coluna de cards menores, reproduzindo o ritmo editorial da referência. A partir de 760px, os quatro ambientes ficam lado a lado, com o mesmo peso visual. Rótulos brancos e um filete curto aparecem sobre um degradê apenas na base das imagens; não há carrossel nem imagem esticada em tela cheia.
 
 ### Cards de mimo
 
@@ -168,6 +168,6 @@ PIX e cartão aparecem como opções paralelas no desktop e empilhadas no mobile
 ### Don't:
 
 - **Don't** introduzir serifas, florais, papel envelhecido, ornamentos ou qualquer linguagem vintage.
-- **Don't** espalhar glassmorphism ou sombras coloridas; o efeito liquid-glass é reservado ao card fotográfico do hero.
+- **Don't** espalhar glassmorphism ou sombras coloridas; a fotografia do hero deve permanecer limpa e direta.
 - **Don't** transformar cards em painéis com borda + sombra + muitos badges.
 - **Don't** publicar mimos novos com imagens de ambiente, URLs externas instáveis ou proporções inconsistentes.
